@@ -21,7 +21,11 @@ libraryDependencies ++= {
 "org.scalatest" %% "scalatest" % "2.2.4" % "test",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
 "com.zaxxer" % "HikariCP" % "2.3.7",
-"ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime")
+"ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
+  "joda-time" % "joda-time" % "2.7",
+  "org.joda" % "joda-convert" % "1.7",
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0"
+)
 
 }
 
