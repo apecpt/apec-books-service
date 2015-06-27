@@ -12,7 +12,7 @@ case class Author(guid : UUID, name : String, slug : String)
 
 case class Category(guid : UUID, slug : String)
 
-case class Publication(guid : UUID, title : String, slug : String, createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])
+case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])
 
 
 class Authors(tag : Tag) extends Table[Author](tag, "books") {
@@ -40,11 +40,12 @@ class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def guid = column[UUID]("guid", O.PrimaryKey)
   def title = column[String]("title", O.NotNull, O.Length(1024))
   def slug = column[String]("slug", O.NotNull, O.Length(256))
+  def publicationYear = column[Int]("publication_year", O.Length(4))
   def createdAt = column[LocalDateTime]("created_at", O.NotNull)
   def updatedAt = column[LocalDateTime]("updated_at")
   def notes = column[String]("notes", O.Length(1024), O.Nullable)
   def slugIndex = index("slug_idx", slug, true)
-  def * = (guid, title, slug, createdAt, updatedAt.?, notes.?) <> (Publication.tupled, Publication.unapply _)
+  def * = (guid, title, slug, publicationYear.?, createdAt, updatedAt.?, notes.?) <> (Publication.tupled, Publication.unapply _)
 }
 
 
