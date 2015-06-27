@@ -24,10 +24,13 @@ libraryDependencies ++= {
 "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
   "joda-time" % "joda-time" % "2.7",
   "org.joda" % "joda-convert" % "1.7",
-  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0"
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
+"me.lessis" %% "tugboat" % "0.2.0" % "test"
 )
-
 }
+
+resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
+
 
 scalacOptions in Test ++= Seq ( "-Yrangepos")
 

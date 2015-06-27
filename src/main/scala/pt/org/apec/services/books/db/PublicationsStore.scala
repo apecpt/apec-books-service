@@ -5,6 +5,7 @@ import scala.concurrent.ExecutionContext
 import java.util.UUID
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalDate
+import scala.concurrent.Future
 
 /**
  * @author ragb
@@ -12,8 +13,18 @@ import org.joda.time.LocalDate
 class PublicationsStore(db : Database)(implicit executorContext : ExecutionContext) {
   def createSchema = db.run(Tables.schema.create)
   def dropSchema = db.run(Tables.schema.drop)
+  def createCategory(category : NewCategoryRequest) : Future[Category] = db.run(Actions.insertCategory(Category(createGUID, category.name)))
+  def getCategories : Future[Seq[Category]] = db.run(Actions.listCategories)
   
-
+  private def createGUID = UUID.randomUUID()
+  
+  object Actions {
+    import Tables._
+    
+    def insertCategory(category : Category) = (categories returning categories.map(_.guid) into ((c, guid) => c)) += category
+    def listCategories = categories.result
+  }
 }
 
+case class NewCategoryRequest(name : String)
 case class PublicationInfo(guid : UUID, authors : Seq[Author], categories : Seq[Category], title : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])

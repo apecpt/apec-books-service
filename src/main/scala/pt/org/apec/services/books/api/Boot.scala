@@ -23,7 +23,6 @@ object Boot extends App {
   implicit val system = ActorSystem("apec-books-service")
   import system.dispatcher
   
-  Tables.schema.createStatements foreach println
   //val db = Database.forConfig("db.default", conf)
   val booksServiceActor = system.actorOf(Props[BooksServiceActor])
   implicit val timeout = Timeout(5 seconds)
