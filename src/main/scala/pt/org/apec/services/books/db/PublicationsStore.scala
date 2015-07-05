@@ -15,7 +15,7 @@ class PublicationsStore(db : Database)(implicit executorContext : ExecutionConte
   def dropSchema = db.run(Tables.schema.drop)
   def createCategory(category : NewCategoryRequest) : Future[Category] = db.run(Actions.insertCategory(Category(createGUID, category.name)))
   def getCategories : Future[Seq[Category]] = db.run(Actions.listCategories)
-  
+  def getCategoryBySlug(slug : String) : Future[Option[Category]] = db.run(Actions.getCategoryBySlug(slug))
   private def createGUID = UUID.randomUUID()
   
   object Actions {
@@ -23,6 +23,8 @@ class PublicationsStore(db : Database)(implicit executorContext : ExecutionConte
     
     def insertCategory(category : Category) = (categories returning categories.map(_.guid) into ((c, guid) => c)) += category
     def listCategories = categories.result
+    def getCategoryByGUID(guid : UUID) = categories.filter(_.guid === guid).result.headOption
+    def getCategoryBySlug(slug : String) = categories.filter(_.slug === slug).result.headOption
   }
 }
 

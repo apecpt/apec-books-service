@@ -19,7 +19,7 @@ class Authors(tag : Tag) extends Table[Author](tag, "books") {
   def guid = column[UUID]("guid", O.PrimaryKey)
   def name = column[String]("name", O.NotNull)
   def slug = column[String]("slug", O.NotNull, O.Length(256))
-  def slugIndex = index("slug_idx", slug, true)
+  def slugIndex = index("author_slug_idx", slug, true)
   def * = (guid, name, slug) <> (Author.tupled, Author.unapply _)
 }
 
@@ -31,7 +31,7 @@ object Authors {
 class Categories(tag : Tag) extends Table[Category](tag, "categories") {
   val guid = column[UUID]("guid", O.PrimaryKey)
   val slug = column[String]("slug", O.NotNull, O.Length(48))
-  val slugIndex = index("slug_idx", slug, true)
+  val slugIndex = index("category_slug_idx", slug, true)
   def * = (guid, slug) <> (Category.tupled, Category.unapply _)
 }
 
@@ -44,7 +44,7 @@ class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def createdAt = column[LocalDateTime]("created_at", O.NotNull)
   def updatedAt = column[LocalDateTime]("updated_at")
   def notes = column[String]("notes", O.Length(1024), O.Nullable)
-  def slugIndex = index("slug_idx", slug, true)
+  def slugIndex = index("publication_slug_idx", slug, true)
   def * = (guid, title, slug, publicationYear.?, createdAt, updatedAt.?, notes.?) <> (Publication.tupled, Publication.unapply _)
 }
 
