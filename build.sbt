@@ -16,16 +16,16 @@ libraryDependencies ++= {
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-routing" % sprayV,
+  "io.spray" %% "spray-json" % "1.3.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "io.spray" %% "spray-testkit" % sprayV,
 "org.scalatest" %% "scalatest" % "2.2.4" % "test",
-      "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
+      "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
 "com.zaxxer" % "HikariCP" % "2.3.7",
 "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
   "joda-time" % "joda-time" % "2.7",
   "org.joda" % "joda-convert" % "1.7",
-  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0",
-"me.lessis" %% "tugboat" % "0.2.0" % "test"
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0"
 )
 }
 

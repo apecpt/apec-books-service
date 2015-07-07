@@ -13,7 +13,7 @@ import scala.concurrent.Future
 class PublicationsStore(db : Database)(implicit executorContext : ExecutionContext) {
   def createSchema = db.run(Tables.schema.create)
   def dropSchema = db.run(Tables.schema.drop)
-  def createCategory(category : NewCategoryRequest) : Future[Category] = db.run(Actions.insertCategory(Category(createGUID, category.name)))
+  def createCategory(category : NewCategoryRequest) : Future[Category] = db.run(Actions.insertCategory(Category(createGUID, category.slug)))
   def getCategories : Future[Seq[Category]] = db.run(Actions.listCategories)
   def getCategoryBySlug(slug : String) : Future[Option[Category]] = db.run(Actions.getCategoryBySlug(slug))
   private def createGUID = UUID.randomUUID()
@@ -28,5 +28,5 @@ class PublicationsStore(db : Database)(implicit executorContext : ExecutionConte
   }
 }
 
-case class NewCategoryRequest(name : String)
+case class NewCategoryRequest(slug : String)
 case class PublicationInfo(guid : UUID, authors : Seq[Author], categories : Seq[Category], title : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])
