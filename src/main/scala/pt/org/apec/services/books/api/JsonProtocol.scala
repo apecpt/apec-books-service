@@ -9,5 +9,7 @@ trait JsonProtocol extends PlayJsonSupport {
   implicit val newCategoryRequestFormat = Json.format[NewCategoryRequest]
   implicit val categoryFormat = Json.format[Category]
   implicit val DuplicateFoundWrites = Json.writes[DatabaseException]
+  implicit val newAuthorRequestFormat = Json.format[NewAuthorRequest]
+  implicit val authorFormat = Json.format[Author]
 }
 

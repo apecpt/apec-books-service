@@ -17,14 +17,15 @@ class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor 
 trait BooksService extends HttpService with JsonProtocol {
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
-  
+
   implicit def exceptionHandler = ExceptionHandler {
-    case e : DuplicateFound => complete {StatusCodes.Conflict -> e}
+    case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
   }
-  def routes = categoryRoutes
+
+  def routes = categoryRoutes ~ authorRoutes
 
   def categoryRoutes = pathPrefix("categories") {
-    pathEnd {
+    pathEndOrSingleSlash {
       get {
         complete(publicationsStore.getCategories)
       } ~
@@ -34,15 +35,35 @@ trait BooksService extends HttpService with JsonProtocol {
           }
         }
     } ~
-    path(Segment) { slug =>
-      (get & rejectEmptyResponse) {
-        complete {
-          publicationsStore.getCategoryBySlug(slug)
+      path(Segment) { slug =>
+        (get & rejectEmptyResponse) {
+          complete {
+            publicationsStore.getCategoryBySlug(slug)
+          }
         }
       }
-      }
-    
+
   }
-      
-    
+
+  def authorRoutes = pathPrefix("authors") {
+    pathEndOrSingleSlash {
+      get {
+        complete {
+          publicationsStore.getAuthors
+        }
+      } ~
+        (post & entity(as[NewAuthorRequest])) { newAuthor =>
+          complete {
+            StatusCodes.Created -> publicationsStore.createAuthor(newAuthor)
+          }
+        }
+    } ~
+      path(Segment) { slug =>
+        (get & rejectEmptyResponse) {
+          complete {
+            publicationsStore.getAuthorBySlug(slug)
+          }
+        }
+      }
+  }
 }
