@@ -6,6 +6,7 @@ import java.util.UUID
 import org.joda.time.LocalDateTime
 import org.joda.time.LocalDate
 import scala.concurrent.Future
+import org.postgresql.util.PSQLException
 
 /**
  * @author ragb
@@ -14,9 +15,13 @@ class PublicationsStore(db : Database)(implicit executorContext : ExecutionConte
   def createSchema = db.run(Tables.schema.create)
   def dropSchema = db.run(Tables.schema.drop)
   def createCategory(category : NewCategoryRequest) : Future[Category] = db.run(Actions.insertCategory(Category(createGUID, category.slug)))
+  .recoverWith {
+    case e : PSQLException if e.getSQLState == "23505" => Future.failed(new DuplicateFound())
+  }
   def getCategories : Future[Seq[Category]] = db.run(Actions.listCategories)
   def getCategoryBySlug(slug : String) : Future[Option[Category]] = db.run(Actions.getCategoryBySlug(slug))
   private def createGUID = UUID.randomUUID()
+  
   
   object Actions {
     import Tables._
@@ -30,3 +35,6 @@ class PublicationsStore(db : Database)(implicit executorContext : ExecutionConte
 
 case class NewCategoryRequest(slug : String)
 case class PublicationInfo(guid : UUID, authors : Seq[Author], categories : Seq[Category], title : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])
+
+case class DatabaseException(errorCode : String) extends Throwable
+class DuplicateFound extends DatabaseException ("error.duplicateFound")

@@ -9,7 +9,6 @@ import spray.testkit.ScalatestRouteTest
 import pt.org.apec.services.books.api.BooksService
 import spray.http._
 
-
 /**
  * @author ragb
  */
@@ -17,7 +16,7 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
 
   "Publications API" should "insert new categories" in {
     val category = NewCategoryRequest("test")
-    Post("/categories", category)            ~> sealRoute(routes) ~> check {
+    Post("/categories", category) ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.Created
       responseAs[Category].slug shouldBe category.slug
     }
@@ -25,7 +24,7 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
 
   it should "insert new categories with diferent GUIDs" in {
     val c1 = NewCategoryRequest("c1")
-    var c1Response : Category = null
+    var c1Response: Category = null
     Post("/categories", c1) ~> routes ~> check {
       status shouldBe StatusCodes.Created
       c1Response = responseAs[Category]
@@ -36,7 +35,7 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
       c1Response.guid shouldNot be(responseAs[Category].guid)
     }
   }
-  
+
   it should "Get inserted categories by slug" in {
     val c1 = NewCategoryRequest("c1")
     Post("/categories", c1) ~> routes ~> check {
@@ -47,10 +46,21 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
       responseAs[Category].slug shouldBe c1.slug
     }
   }
-  
+
   it should "return 404 for non existent categories" in {
     Get("/Categories/bubu") ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.NotFound
     }
+  }
+
+  it should "not allow two categories with the same slug" in {
+    val category = NewCategoryRequest("c1")
+    Post("/categories", category) ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.Created
+    }
+    Post("/categories", category) ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.Conflict
+    }
+
   }
 }

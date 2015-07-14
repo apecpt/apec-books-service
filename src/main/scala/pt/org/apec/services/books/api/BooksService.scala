@@ -17,6 +17,10 @@ class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor 
 trait BooksService extends HttpService with JsonProtocol {
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
+  
+  implicit def exceptionHandler = ExceptionHandler {
+    case e : DuplicateFound => complete {StatusCodes.Conflict -> e}
+  }
   def routes = categoryRoutes
 
   def categoryRoutes = pathPrefix("categories") {
