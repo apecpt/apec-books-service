@@ -16,7 +16,7 @@ libraryDependencies ++= {
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-routing" % sprayV,
-  "io.spray" %% "spray-json" % "1.3.2",
+  "com.typesafe.play" %% "play-json" % "2.4.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "io.spray" %% "spray-testkit" % sprayV,
 "org.scalatest" %% "scalatest" % "2.2.4" % "test",

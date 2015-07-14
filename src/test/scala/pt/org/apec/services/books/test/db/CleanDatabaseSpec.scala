@@ -17,10 +17,9 @@ import org.scalatest.concurrent.ScalaFutures
 /**
  * @author ragb
  */
-trait DatabaseSpec extends FlatSpec with BeforeAndAfter with ScalaFutures {
+trait CleanDatabaseSpec extends FlatSpec with BeforeAndAfter {
   val database = Database.forConfig("db.test")
       val publicationsStore = new PublicationsStore(database)
-
   before {
     Await.result(publicationsStore.createSchema, 10 seconds)
   }

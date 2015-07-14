@@ -5,32 +5,52 @@ import org.scalatest.matchers.ShouldMatchers
 import pt.org.apec.services.books.db._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.concurrent.IntegrationPatience
+import spray.testkit.ScalatestRouteTest
+import pt.org.apec.services.books.api.BooksService
+import spray.http._
+
 
 /**
  * @author ragb
  */
-class CategoriesSpec extends FlatSpec with DatabaseSpec with Matchers with IntegrationPatience {
+class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
 
-  "Publications store" should "insert new categories" in {
+  "Publications API" should "insert new categories" in {
     val category = NewCategoryRequest("test")
-    publicationsStore.createCategory(category).futureValue.slug shouldBe (category.name)
+    Post("/categories", category)            ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.Created
+      responseAs[Category].slug shouldBe category.slug
+    }
   }
 
   it should "insert new categories with diferent GUIDs" in {
-    val category = NewCategoryRequest("test")
-    val r1 = publicationsStore.createCategory(category)
-    val category2 = NewCategoryRequest("test2")
-    val r2 = publicationsStore.createCategory(category2)
-    r1.futureValue.guid shouldNot be(r2.futureValue.guid)
+    val c1 = NewCategoryRequest("c1")
+    var c1Response : Category = null
+    Post("/categories", c1) ~> routes ~> check {
+      status shouldBe StatusCodes.Created
+      c1Response = responseAs[Category]
+    }
+    val c2 = NewCategoryRequest("c2")
+    Post("/categories", c2) ~> routes ~> check {
+      status shouldBe StatusCodes.Created
+      c1Response.guid shouldNot be(responseAs[Category].guid)
+    }
   }
   
   it should "Get inserted categories by slug" in {
-    val category = NewCategoryRequest("test")
-    val f = for {
-      _ <- publicationsStore.createCategory(category)
-      r <- publicationsStore.getCategoryBySlug(category.name)
-    } yield(r)
-    f.futureValue shouldBe defined   
+    val c1 = NewCategoryRequest("c1")
+    Post("/categories", c1) ~> routes ~> check {
+      status shouldBe StatusCodes.Created
+    }
+    Get("/categories/" + c1.slug) ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[Category].slug shouldBe c1.slug
+    }
+  }
   
+  it should "return 404 for non existent categories" in {
+    Get("/Categories/bubu") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.NotFound
+    }
   }
 }
