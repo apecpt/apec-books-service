@@ -34,6 +34,7 @@ resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven
 
 scalacOptions in Test ++= Seq ( "-Yrangepos")
 
+parallelExecution in Test := false
 
 Revolver.settings
 
