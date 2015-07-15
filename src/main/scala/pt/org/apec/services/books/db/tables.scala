@@ -12,7 +12,7 @@ case class Author(guid : UUID, name : String, slug : String)
 
 case class Category(guid : UUID, slug : String)
 
-case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String])
+case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String] = None)
 
 
 class Authors(tag : Tag) extends Table[Author](tag, "books") {
