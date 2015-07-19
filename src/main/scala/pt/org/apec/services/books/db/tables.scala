@@ -3,7 +3,7 @@ package pt.org.apec.services.books.db
 import slick.driver.PostgresDriver.api._
 import java.util.UUID
 import com.github.tototoshi.slick.PostgresJodaSupport._
-import org.joda.time.LocalDateTime
+import org.joda.time.DateTime
 
 
 
@@ -12,7 +12,7 @@ case class Author(guid : UUID, name : String, slug : String)
 
 case class Category(guid : UUID, slug : String)
 
-case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : LocalDateTime, updatedAt : Option[LocalDateTime], notes : Option[String] = None)
+case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : DateTime, updatedAt : Option[DateTime], notes : Option[String] = None)
 
 
 class Authors(tag : Tag) extends Table[Author](tag, "books") {
@@ -41,8 +41,8 @@ class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def title = column[String]("title", O.NotNull, O.Length(1024))
   def slug = column[String]("slug", O.NotNull, O.Length(256))
   def publicationYear = column[Int]("publication_year", O.Length(4))
-  def createdAt = column[LocalDateTime]("created_at", O.NotNull)
-  def updatedAt = column[LocalDateTime]("updated_at")
+  def createdAt = column[DateTime]("created_at", O.NotNull)
+  def updatedAt = column[DateTime]("updated_at")
   def notes = column[String]("notes", O.Length(1024), O.Nullable)
   def slugIndex = index("publication_slug_idx", slug, true)
   def * = (guid, title, slug, publicationYear.?, createdAt, updatedAt.?, notes.?) <> (Publication.tupled, Publication.unapply _)
