@@ -31,29 +31,34 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     } yield ()).transactionally
     db.run(action.map(unit => guid)) recoverWith (mapDuplicateException)
   }
-  
-  def getPublications : Future[Seq[PublicationInfo]] = {
+
+  def getPublications: Future[Seq[PublicationInfo]] = {
     val publications = Queries.getPublications.result
     val actions = publications flatMap { ps =>
-      val infos : Seq[DBIO[PublicationInfo]] = ps map mkPublicationInfo
+      val infos: Seq[DBIO[PublicationInfo]] = ps map mkPublicationInfo
       DBIO.sequence(infos)
-  }
+    }
     db.run(actions)
   }
 
-  
-  private def mkPublicationInfo(publication : Publication) : DBIO[PublicationInfo] = {
+  def getPublicationByGUID(guid: UUID): Future[Option[PublicationInfo]] = {
+    // This gets confusing using a for compreension
+    val action = Queries.getPublicationByGUID(guid).result.headOption
+    .flatMap {_.map(mkPublicationInfo(_).map(Some.apply)).getOrElse(DBIO.successful(None))}
+    db.run(action)
+  }
+
+  private def mkPublicationInfo(publication: Publication): DBIO[PublicationInfo] = {
     val authors = Queries.getPublicationAuthors(publication.guid).result
     val categories = Queries.getPublicationCategories(publication.guid).result
-    (authors zip categories) map { case (a,c) =>
-      PublicationInfo(publication.guid, a, c, publication.title, publication.slug, publication.publicationYear, publication.createdAt, publication.updatedAt, publication.notes)
+    (authors zip categories) map {
+      case (a, c) =>
+        PublicationInfo(publication.guid, a, c, publication.title, publication.slug, publication.publicationYear, publication.createdAt, publication.updatedAt, publication.notes)
     }
   }
   private val mapDuplicateException: PartialFunction[Throwable, Future[Nothing]] = {
     case e: PSQLException if e.getSQLState == "23505" => Future.failed(new DuplicateFound())
   }
-  
-  
 
   private def createGUID = UUID.randomUUID()
 
@@ -72,7 +77,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     def insertPublicationAuthors(authorGUIDs: Seq[UUID])(publication: Publication) = publicationAuthors ++= authorGUIDs.map(guid => (publication.guid, guid))
     def insertPublicationCategories(categoryGUIDs: Seq[UUID])(publication: Publication) = publicationCategories ++= categoryGUIDs.map(guid => (publication.guid, guid))
     val getPublicationByGUID = publications.findBy(_.guid)
-    def getPublicationAuthors(publicationGUID: UUID) = for     {
+    def getPublicationAuthors(publicationGUID: UUID) = for {
       (_, author) <- publicationAuthors.filter(_.publicationGUID === publicationGUID) join authors on (_.authorGUID === _.guid)
     } yield (author)
     def getPublicationCategories(publicationGUID: UUID) = for {
@@ -82,7 +87,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
   }
 
 }
-  
+
 case class NewCategoryRequest(slug: String) {
   require(slug.nonEmpty, "Slug must not be empty")
 }
