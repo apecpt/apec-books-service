@@ -22,14 +22,15 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
   def getAuthorBySlug(slug: String): Future[Option[Author]] = db.run(Queries.getAuthorBySlug(slug).result.headOption)
   def getAuthorByGUID(guid: UUID): Future[Option[Author]] = db.run(Queries.getAuthorByGUID(guid).result.headOption)
 
-  def insertPublication(newPublication: NewPublicationRequest): Future[UUID] = {
+  def createPublication(newPublication: NewPublicationRequest): Future[PublicationInfo] = {
     val guid = createGUID
     val action = (for {
       p <- Queries.insertPublication(Publication(guid, newPublication.title, newPublication.slug, newPublication.publicationYear, DateTime.now(), None, newPublication.notes))
       _ <- Queries.insertPublicationAuthors(newPublication.authors)(p)
       _ <- Queries.insertPublicationCategories(newPublication.categories)(p)
-    } yield ()).transactionally
-    db.run(action.map(unit => guid)) recoverWith (mapDuplicateException)
+      result <- mkPublicationInfo(p)
+    } yield (result)).transactionally
+    db.run(action) recoverWith (mapDuplicateException)
   }
 
   def getPublications: Future[Seq[PublicationInfo]] = {
@@ -74,8 +75,8 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     val getAuthorBySlug = authors.findBy(_.slug)
     val getAuthorByGUID = authors.findBy(_.guid)
     def insertPublication(publication: Publication) = (publications returning publications.map(_.guid) into ((p, guid) => p)) += publication
-    def insertPublicationAuthors(authorGUIDs: Seq[UUID])(publication: Publication) = publicationAuthors ++= authorGUIDs.map(guid => (publication.guid, guid))
-    def insertPublicationCategories(categoryGUIDs: Seq[UUID])(publication: Publication) = publicationCategories ++= categoryGUIDs.map(guid => (publication.guid, guid))
+    def insertPublicationAuthors(authorGUIDs: Seq[UUID])(publication: Publication) = publicationAuthors ++= authorGUIDs.map(guid => (guid, publication.guid))
+    def insertPublicationCategories(categoryGUIDs: Seq[UUID])(publication: Publication) = publicationCategories ++= categoryGUIDs.map(guid => (guid, publication.guid))
     val getPublicationByGUID = publications.findBy(_.guid)
     def getPublicationAuthors(publicationGUID: UUID) = for {
       (_, author) <- publicationAuthors.filter(_.publicationGUID === publicationGUID) join authors on (_.authorGUID === _.guid)

@@ -66,14 +66,26 @@ trait BooksService extends HttpService with JsonProtocol {
         }
       }
   }
-  
+
   def publicationRoutes = pathPrefix("publications") {
     pathEndOrSingleSlash {
       get {
         complete {
           publicationsStore.getPublications
         }
+      } ~
+        (post & entity(as[NewPublicationRequest])) { newPublication =>
+          complete {
+            StatusCodes.Created -> publicationsStore.createPublication(newPublication)
+          }
+        }
+    } ~
+      path(JavaUUID) { guid =>
+        (get & rejectEmptyResponse) {
+          complete {
+            publicationsStore.getPublicationByGUID(guid)
+          }
+        }
       }
-    }
   }
 }
