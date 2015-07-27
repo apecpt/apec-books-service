@@ -10,6 +10,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import slick.driver.PostgresDriver.api._
 import pt.org.apec.services.books.db.Tables
+import pt.org.apec.services.books.db.PublicationsStore
 
 
 
@@ -23,8 +24,9 @@ object Boot extends App {
   implicit val system = ActorSystem("apec-books-service")
   import system.dispatcher
   
-  //val db = Database.forConfig("db.default", conf)
-  val booksServiceActor = system.actorOf(Props[BooksServiceActor])
+  val db = Database.forConfig("db.default", conf)
+  val store = new PublicationsStore(db)
+  val booksServiceActor = system.actorOf(Props(new BooksServiceActor(store)))
   implicit val timeout = Timeout(5 seconds)
   IO(Http) ? Http.Bind(booksServiceActor, interface=httpInterface, port=httpPort)
 }
