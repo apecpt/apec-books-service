@@ -1,14 +1,17 @@
-name := "apec-books-service"
 
-organization := "pt.org.apec"
+val playJsonVersion = "2.4.2"
 
-version := "0.1"
+val commonSettings = Seq(
+	organization := "pt.org.apec",
+	version := "0.1",
+	scalaVersion  := "2.11.6",
+	scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
+	libraryDependencies ++= Seq(
+  "joda-time" % "joda-time" % "2.7",
+  "org.joda" % "joda-convert" % "1.7",
+    "com.typesafe.play" %% "play-json" % playJsonVersion))
 
-scalaVersion  := "2.11.6"
-
-scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
-
-libraryDependencies ++= {
+val serviceLibraryDependencies = {
 	val akkaV = "2.3.11"
 	val sprayV = "1.3.3"
 	val slickV = "3.0.0"
@@ -16,7 +19,6 @@ libraryDependencies ++= {
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-routing" % sprayV,
-  "com.typesafe.play" %% "play-json" % "2.4.2",
   "com.typesafe.slick" %% "slick" % slickV,
   "io.spray" %% "spray-testkit" % sprayV,
 "org.scalatest" %% "scalatest" % "2.2.4" % "test",
@@ -24,21 +26,24 @@ libraryDependencies ++= {
 "com.zaxxer" % "HikariCP" % "2.3.7",
 "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
 "com.typesafe.akka" %% "akka-slf4j" % akkaV,
-  "joda-time" % "joda-time" % "2.7",
-  "org.joda" % "joda-convert" % "1.7",
   "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0"
 )
 }
 
-resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven"
+lazy val root = (project in file("."))
+	.settings(commonSettings : _*)
+	.settings(name := "apec-books-service")
+	.settings(libraryDependencies ++= serviceLibraryDependencies)
+	.settings(
+resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven",
+scalacOptions in Test ++= Seq ( "-Yrangepos"),
+parallelExecution in Test := false,
+dockerBaseImage := "java:8")
+.settings(
+Revolver.settings :_*)
+.enablePlugins (JavaAppPackaging, DockerPlugin)
+	.dependsOn(common)
 
-
-scalacOptions in Test ++= Seq ( "-Yrangepos")
-
-parallelExecution in Test := false
-
-Revolver.settings
-
-enablePlugins (JavaAppPackaging, DockerPlugin ) 
-
-dockerBaseImage := "java:8"
+lazy val common = (project in file("common"))
+	.settings(commonSettings : _*)
+	.settings(name := "apec-books-common")
