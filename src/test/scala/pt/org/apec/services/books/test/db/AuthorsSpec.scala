@@ -3,6 +3,7 @@ package pt.org.apec.services.books.test.db
 import org.scalatest._
 import pt.org.apec.services.books.db._
 import spray.http._
+import pt.org.apec.services.books.common._
 
 
 class AuthorsSpec extends BaseRouteSpec with Matchers {

@@ -3,6 +3,7 @@ package pt.org.apec.services.books.test.db
 import org.scalatest._
 import pt.org.apec.services.books.db._
 import spray.http.StatusCodes
+import pt.org.apec.services.books.common._
 
 
 trait BasicData extends Matchers {

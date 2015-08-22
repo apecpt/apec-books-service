@@ -8,6 +8,7 @@ import org.scalatest.concurrent.IntegrationPatience
 import spray.testkit.ScalatestRouteTest
 import pt.org.apec.services.books.api.BooksService
 import spray.http._
+import pt.org.apec.services.books.common._
 
 /**
  * @author ragb

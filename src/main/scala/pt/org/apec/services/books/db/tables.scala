@@ -4,15 +4,7 @@ import slick.driver.PostgresDriver.api._
 import java.util.UUID
 import com.github.tototoshi.slick.PostgresJodaSupport._
 import org.joda.time.DateTime
-
-
-
-
-case class Author(guid : UUID, name : String, slug : String)
-
-case class Category(guid : UUID, slug : String)
-
-case class Publication(guid : UUID, title : String, slug : String, publicationYear : Option[Int], createdAt : DateTime, updatedAt : Option[DateTime], notes : Option[String] = None)
+import pt.org.apec.services.books.common._
 
 
 class Authors(tag : Tag) extends Table[Author](tag, "books") {

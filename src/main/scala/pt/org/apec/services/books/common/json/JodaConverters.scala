@@ -1,10 +1,11 @@
-package pt.org.apec.services.books.api
+package pt.org.apec.services.books.common.json
 
 
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{Period, LocalDate, DateTime, Duration}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
+import scala.math.BigDecimal.long2bigDecimal
 
 /**
  * @author dbalduini

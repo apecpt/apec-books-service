@@ -6,6 +6,7 @@ import java.util.UUID
 import org.joda.time.DateTime
 import scala.concurrent.Future
 import org.postgresql.util.PSQLException
+import pt.org.apec.services.books.common._
 
 /**
  * @author ragb
@@ -87,23 +88,6 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     val getPublications = publications
   }
 
-}
-
-case class NewCategoryRequest(slug: String) {
-  require(slug.nonEmpty, "Slug must not be empty")
-}
-
-case class NewAuthorRequest(name: String, slug: String) {
-  require(slug.nonEmpty, "Slug must not be empty")
-  require(name.nonEmpty, "Name must not be empty")
-}
-
-case class PublicationInfo(guid: UUID, authors: Seq[Author], categories: Seq[Category], title: String, slug: String, publicationYear: Option[Int], createdAt: DateTime, updatedAt: Option[DateTime], notes: Option[String])
-case class NewPublicationRequest(title: String, slug: String, authors: Seq[UUID], categories: Seq[UUID], publicationYear: Option[Int], notes: Option[String] = None) {
-  require(authors.nonEmpty, "Authors must not be empty")
-  require(categories.nonEmpty, "Categories must not be empty")
-  require(slug.nonEmpty, "Slug must not be empty")
-  require(title.nonEmpty, "Title must not be empty")
 }
 
 case class DatabaseException(errorCode: String) extends Throwable

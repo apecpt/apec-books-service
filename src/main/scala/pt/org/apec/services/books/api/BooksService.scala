@@ -4,6 +4,7 @@ import spray.routing._
 import spray.http._
 import akka.actor.Actor
 import pt.org.apec.services.books.db._
+import pt.org.apec.services.books.common._
 import spray.http._
 import spray.httpx.PlayJsonSupport._
 import scala.concurrent.ExecutionContext
