@@ -23,21 +23,30 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
   def getAuthorBySlug(slug: String): Future[Option[Author]] = db.run(Queries.getAuthorBySlug(slug).result.headOption)
   def getAuthorByGUID(guid: UUID): Future[Option[Author]] = db.run(Queries.getAuthorByGUID(guid).result.headOption)
 
+  def createPublicationStatus(newPublicationStatus: NewPublicationStatusRequest): Future[PublicationStatus] = db.run(Queries.insertPublicationStatus(PublicationStatus(createGUID, newPublicationStatus.slug, newPublicationStatus.score))).recoverWith(mapDuplicateException)
+  def getPublicationStatuses: Future[Seq[PublicationStatus]] = db.run(Queries.listPublicationStatuses.result)
+
   def createPublication(newPublication: NewPublicationRequest): Future[PublicationInfo] = {
     val guid = createGUID
     val action = (for {
-      p <- Queries.insertPublication(Publication(guid, newPublication.title, newPublication.slug, newPublication.publicationYear, DateTime.now(), None, newPublication.notes))
+      p <- Queries.insertPublication(Publication(guid, newPublication.title, newPublication.slug, newPublication.publicationYear, DateTime.now(), None, newPublication.notes, newPublication.publicationStatusGUID))
       _ <- Queries.insertPublicationAuthors(newPublication.authors)(p)
       _ <- Queries.insertPublicationCategories(newPublication.categories)(p)
-      result <- mkPublicationInfo(p)
+      s <- newPublication.publicationStatusGUID
+        .map { guid => Queries.getPublicationStatusByGUID(guid).result.headOption }
+        .getOrElse(DBIO.successful(None))
+      result <- mkPublicationInfo(p, s)
     } yield (result)).transactionally
     db.run(action) recoverWith (mapDuplicateException)
   }
 
   def getPublications: Future[Seq[PublicationInfo]] = {
-    val publications = Queries.getPublications.result
+    val q = for {
+      (p, s) <- Queries.getPublications joinLeft Tables.publicationStatuses on (_.publicationStatusGUID === _.guid)
+    } yield (p, s)
+    val publications = q.result
     val actions = publications flatMap { ps =>
-      val infos: Seq[DBIO[PublicationInfo]] = ps map mkPublicationInfo
+      val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s) => mkPublicationInfo(p, s) }
       DBIO.sequence(infos)
     }
     db.run(actions)
@@ -45,17 +54,24 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
 
   def getPublicationByGUID(guid: UUID): Future[Option[PublicationInfo]] = {
     // This gets confusing using a for compreension
-    val action = Queries.getPublicationByGUID(guid).result.headOption
-    .flatMap {_.map(mkPublicationInfo(_).map(Some.apply)).getOrElse(DBIO.successful(None))}
+    val q = for {
+      (p, s) <- Tables.publications joinLeft Tables.publicationStatuses on (_.publicationStatusGUID === _.guid) if p.guid === guid
+    } yield (p, s)
+
+    val action = q.result.headOption
+      .flatMap {
+        case Some((p, s)) => mkPublicationInfo(p, s).map(Some.apply)
+        case _          => DBIO.successful(None)
+      }
     db.run(action)
   }
 
-  private def mkPublicationInfo(publication: Publication): DBIO[PublicationInfo] = {
+  private def mkPublicationInfo(publication: Publication, status: Option[PublicationStatus]): DBIO[PublicationInfo] = {
     val authors = Queries.getPublicationAuthors(publication.guid).result
     val categories = Queries.getPublicationCategories(publication.guid).result
     (authors zip categories) map {
       case (a, c) =>
-        PublicationInfo(publication.guid, a, c, publication.title, publication.slug, publication.publicationYear, publication.createdAt, publication.updatedAt, publication.notes)
+        PublicationInfo(publication.guid, a, c, publication.title, publication.slug, publication.publicationYear, publication.createdAt, publication.updatedAt, publication.notes, status)
     }
   }
   private val mapDuplicateException: PartialFunction[Throwable, Future[Nothing]] = {
@@ -75,6 +91,10 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     def insertAuthor(author: Author) = (authors returning authors.map(_.guid) into ((a, guid) => a)) += author
     val getAuthorBySlug = authors.findBy(_.slug)
     val getAuthorByGUID = authors.findBy(_.guid)
+    def insertPublicationStatus(publicationStatus: PublicationStatus) = (publicationStatuses returning publicationStatuses.map(_.guid) into ((p, guid) => p)) += publicationStatus
+    val getPublicationStatusBySlug = publicationStatuses.findBy(_.slug)
+    val getPublicationStatusByGUID = publicationStatuses.findBy(_.guid)
+    val listPublicationStatuses = publicationStatuses.sortBy(_.score)
     def insertPublication(publication: Publication) = (publications returning publications.map(_.guid) into ((p, guid) => p)) += publication
     def insertPublicationAuthors(authorGUIDs: Seq[UUID])(publication: Publication) = publicationAuthors ++= authorGUIDs.map(guid => (guid, publication.guid))
     def insertPublicationCategories(categoryGUIDs: Seq[UUID])(publication: Publication) = publicationCategories ++= categoryGUIDs.map(guid => (guid, publication.guid))

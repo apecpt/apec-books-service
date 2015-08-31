@@ -9,17 +9,18 @@ import pt.org.apec.services.books.common._
  */
 package object json {
   trait JsonFormaters {
-  import JodaConverters._
-  implicit val newCategoryRequestFormat = Json.format[NewCategoryRequest]
-  implicit val categoryFormat = Json.format[Category]
-  implicit val newAuthorRequestFormat = Json.format[NewAuthorRequest]
-  implicit val authorFormat = Json.format[Author]
-  implicit val newPublicationRequestFormat = Json.format[NewPublicationRequest]
-  implicit val publicationInfoFormat = Json.format[PublicationInfo]
-  
-}
+    import JodaConverters._
+    implicit val newCategoryRequestFormat = Json.format[NewCategoryRequest]
+    implicit val categoryFormat = Json.format[Category]
+    implicit val newAuthorRequestFormat = Json.format[NewAuthorRequest]
+    implicit val authorFormat = Json.format[Author]
+    implicit val newPublicationRequestFormat = Json.format[NewPublicationRequest]
+    implicit val newPublicationStatusRequestFormat = Json.format[NewPublicationStatusRequest]
+    implicit val publicationStatusFormat = Json.format[PublicationStatus]
+    implicit val publicationInfoFormat = Json.format[PublicationInfo]
 
-object JsonFormaters extends JsonFormaters
+  }
 
+  object JsonFormaters extends JsonFormaters
 
 }

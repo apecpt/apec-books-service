@@ -22,4 +22,11 @@ trait BasicData extends Matchers {
         responseAs[Author]
       }
     }
+    
+      def createCorrigido = {
+        Post("/publicationStatuses", NewPublicationStatusRequest("corrigido", 0)) ~> routes ~> check {
+        status shouldBe StatusCodes.Created
+        responseAs[PublicationStatus]
+      }
+}
 }

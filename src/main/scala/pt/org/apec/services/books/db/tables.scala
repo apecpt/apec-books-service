@@ -22,11 +22,18 @@ object Authors {
 
 class Categories(tag : Tag) extends Table[Category](tag, "categories") {
   val guid = column[UUID]("guid", O.PrimaryKey)
-  val slug = column[String]("slug", O.Length(48))
-  val slugIndex = index("category_slug_idx", slug, true)
+  def slug = column[String]("slug", O.Length(48))
+  def slugIndex = index("category_slug_idx", slug, true)
   def * = (guid, slug) <> (Category.tupled, Category.unapply _)
 }
 
+class PublicationStatuses(tag : Tag) extends Table[PublicationStatus](tag, "publication_statuses") {
+  def guid = column[UUID]("guid", O.PrimaryKey)
+  def slug = column[String]("slug", O.Length(256))
+    def slugIndex = index("publication_status_slug_idx", slug, true)
+  def score = column[Int]("score")
+  def * = (guid, slug, score) <> (PublicationStatus.tupled, PublicationStatus.unapply _)
+}
 
 class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def guid = column[UUID]("guid", O.PrimaryKey)
@@ -37,7 +44,9 @@ class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def updatedAt = column[Option[DateTime]]("updated_at")
   def notes = column[Option[String]]("notes", O.Length(1024))
   def slugIndex = index("publication_slug_idx", slug, true)
-  def * = (guid, title, slug, publicationYear, createdAt, updatedAt, notes) <> (Publication.tupled, Publication.unapply _)
+  def publicationStatusGUID = column[Option[UUID]]("status_guid")
+  def publicationStatus = foreignKey("publication_status_fk", publicationStatusGUID, Tables.publicationStatuses)(_.guid.?)
+  def * = (guid, title, slug, publicationYear, createdAt, updatedAt, notes, publicationStatusGUID) <> (Publication.tupled, Publication.unapply _)
 }
 
 
@@ -65,6 +74,7 @@ object Tables {
   val categories = TableQuery[Categories]
   val publicationAuthors = TableQuery[PublicationAuthors]
   val publicationCategories = TableQuery[PublicationCategories]
-  val schema = authors.schema ++ publications.schema ++ categories.schema ++ publicationAuthors.schema ++ publicationCategories.schema
+  val publicationStatuses = TableQuery[PublicationStatuses]
+  val schema = authors.schema ++ publications.schema ++ categories.schema ++ publicationAuthors.schema ++ publicationCategories.schema ++ publicationStatuses.schema
 }
 
