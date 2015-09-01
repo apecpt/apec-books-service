@@ -1,15 +1,21 @@
 
 val playJsonVersion = "2.4.2"
 
-val commonSettings = Seq(
+val baseSettings = Seq(
 	organization := "pt.org.apec",
 	version := "0.1",
 	scalaVersion  := "2.11.6",
-	scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
-	libraryDependencies ++= Seq(
+	scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"))
+
+val commonSettings = baseSettings ++ Seq(
+libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.7",
   "org.joda" % "joda-convert" % "1.7",
     "com.typesafe.play" %% "play-json" % playJsonVersion))
+
+val clientSettings = baseSettings ++ Seq(
+	libraryDependencies += "io.spray" %% "spray-client" % "1.3.3"
+)
 
 val serviceLibraryDependencies = {
 	val akkaV = "2.3.11"
@@ -42,8 +48,13 @@ dockerBaseImage := "java:8")
 .settings(
 Revolver.settings :_*)
 .enablePlugins (JavaAppPackaging, DockerPlugin)
-	.dependsOn(common)
+	.dependsOn(common, client)
+.aggregate(common,client)
 
 lazy val common = (project in file("common"))
 	.settings(commonSettings : _*)
 	.settings(name := "apec-books-common")
+
+lazy val client = (project in file("client"))
+	.settings(clientSettings : _*)
+.settings(name := "apec-books-client")
