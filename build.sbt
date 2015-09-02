@@ -1,5 +1,9 @@
 
 val playJsonVersion = "2.4.2"
+val akkaV = "2.3.11"
+val sprayV = "1.3.3"
+
+val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaV
 
 val baseSettings = Seq(
 	organization := "pt.org.apec",
@@ -14,14 +18,13 @@ libraryDependencies ++= Seq(
     "com.typesafe.play" %% "play-json" % playJsonVersion))
 
 val clientSettings = baseSettings ++ Seq(
-	libraryDependencies += "io.spray" %% "spray-client" % "1.3.3"
+	libraryDependencies ++= Seq(akkaActor % "provided",
+	"io.spray" %% "spray-client" % "1.3.3")
 )
 
 val serviceLibraryDependencies = {
-	val akkaV = "2.3.11"
-	val sprayV = "1.3.3"
 	val slickV = "3.0.0"
-	Seq("com.typesafe.akka" %% "akka-actor" % akkaV,
+	Seq(akkaActor,
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
   "io.spray" %% "spray-routing" % sprayV,
@@ -57,4 +60,7 @@ lazy val common = (project in file("common"))
 
 lazy val client = (project in file("client"))
 	.settings(clientSettings : _*)
-.settings(name := "apec-books-client")
+	.settings(name := "apec-books-client")
+	.dependsOn(common)
+
+
