@@ -23,7 +23,7 @@ trait BooksService extends HttpService with JsonProtocol {
     case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
   }
 
-  def routes = categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes
+  def routes = categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes
 
   def categoryRoutes = pathPrefix("categories") {
     pathEndOrSingleSlash {
@@ -100,6 +100,18 @@ trait BooksService extends HttpService with JsonProtocol {
       (post  & entity(as[NewPublicationStatusRequest])) { publicationStatus =>
         complete {
           StatusCodes.Created -> publicationsStore.createPublicationStatus(publicationStatus)
+        }
+        }
+    }
+  }
+  
+  def importRoutes = {
+    import ImportDataController._
+    val importDataController = new ImportDataController(publicationsStore)
+    pathPrefix("import" / "rawPublications") {
+      (post & entity(as[Seq[RawPublication]])) { publications =>
+        complete {
+          importDataController.importRawPublications(ImportRawPublicationsRequest(publications))
         }
         }
     }
