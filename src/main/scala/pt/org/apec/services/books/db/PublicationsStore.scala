@@ -25,6 +25,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
 
   def createPublicationStatus(newPublicationStatus: NewPublicationStatusRequest): Future[PublicationStatus] = db.run(Queries.insertPublicationStatus(PublicationStatus(createGUID, newPublicationStatus.slug, newPublicationStatus.score))).recoverWith(mapDuplicateException)
   def getPublicationStatuses: Future[Seq[PublicationStatus]] = db.run(Queries.listPublicationStatuses.result)
+  def getPublicationStatusBySlug(slug : String) : Future[Option[PublicationStatus]] = db.run(Queries.getPublicationStatusBySlug(slug).result.headOption)
 
   def createPublication(newPublication: NewPublicationRequest): Future[PublicationInfo] = {
     val guid = createGUID

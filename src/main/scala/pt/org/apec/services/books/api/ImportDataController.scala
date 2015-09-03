@@ -14,7 +14,8 @@ class ImportDataController(val publicationsStore : PublicationsStore)(implicit e
   def importRawPublications(request : ImportRawPublicationsRequest) : Future[ImportDataResult] = {
     for {
       (categories, authors, statuses) <- importMetadata(request)
-    } yield ImportDataResult(categories,authors, statuses, Seq.empty,Seq.empty)
+      publications <- Future.sequence(request.rawPublications.map(p => importRawPublication(p).map(Some(_))).map(_.recover { case e : DuplicateFound => None}))
+    } yield ImportDataResult(categories,authors, statuses, publications collect {case Some(e) => e},Seq.empty)
   }
 
   private def importMetadata(request : ImportRawPublicationsRequest) = {
@@ -27,18 +28,27 @@ class ImportDataController(val publicationsStore : PublicationsStore)(implicit e
     val statusesF = publicationsStore.getPublicationStatuses
     for {
       ((categories, authors), statuses) <- categoriesF zip authorsF zip statusesF
-      val newCategories = categorySlugs &~ categories.map(_.slug).toSet
-      val newAuthors = authorSlugs &~ authors.map(_.slug).toSet
-      val newStatuses = statusSlugs &~ statuses.map(_.slug).toSet
-      val categoryRequests = newCategories.toSeq map(NewCategoryRequest(_))
-      val authorRequests = newAuthors.toSeq map(a => NewAuthorRequest(a, a))
-      val statusRequests = newStatuses.toSeq map(NewPublicationStatusRequest(_, 0))
+      newCategories = categorySlugs &~ categories.map(_.slug).toSet
+      newAuthors = authorSlugs &~ authors.map(_.slug).toSet
+       newStatuses = statusSlugs &~ statuses.map(_.slug).toSet
+      categoryRequests = newCategories.toSeq map(NewCategoryRequest(_))
+      authorRequests = newAuthors.toSeq map(a => NewAuthorRequest(a, a))
+       statusRequests = newStatuses.toSeq map(NewPublicationStatusRequest(_, 0))
       // could batch this at least...dumb me.
       cs <- Future.sequence(categoryRequests.map(publicationsStore.createCategory(_)))
       as <- Future.sequence(authorRequests.map(publicationsStore.createAuthor(_)))
       ss <- Future.sequence(statusRequests.map(publicationsStore.createPublicationStatus(_)))
     } yield(cs, as, ss)
   }
+  
+  private def importRawPublication(publication : RawPublication) = for {
+    maybeCategory <- publicationsStore.getCategoryBySlug(publication.category)
+    category <- maybeCategory.map(Future.successful).getOrElse(Future.failed(ImportDataException("Category not found: "+ publication.category)))
+    maybeAuthor <- publicationsStore.getAuthorBySlug(publication.author)
+    author <- maybeAuthor.map(Future.successful).getOrElse(Future.failed(ImportDataException("author not found:" + publication.author)))
+    maybeStatus <- publication.status map (publicationsStore.getPublicationStatusBySlug) getOrElse(Future.successful(None))
+    result <- publicationsStore.createPublication(NewPublicationRequest(publication.title, publication.title, Seq(author.guid), Seq(category.guid), None, None, maybeStatus.map(_.guid)))
+  } yield(result)
 }
 
 object ImportDataController {
@@ -49,4 +59,5 @@ object ImportDataController {
   case class ImportDataResult(addedCategories : Seq[Category], addedAuthors : Seq[Author], addedPublicationStatuses : Seq[PublicationStatus], addedPublications : Seq[PublicationInfo], errors : Seq[String])
   
   
+  case class ImportDataException(msg : String) extends Exception(msg)
 }
