@@ -5,6 +5,8 @@ import java.util.UUID
 import scala.concurrent.{Future, ExecutionContext}
 import pt.org.apec.services.books.common._
 import pt.org.apec.services.books.db._
+import pt.org.apec.services.books.util.Slug.slugify
+
 
 /**
  * @author ragb
@@ -20,19 +22,21 @@ class ImportDataController(val publicationsStore : PublicationsStore)(implicit e
 
   private def importMetadata(request : ImportRawPublicationsRequest) = {
         // make this kinda transactional at least.
-    val categorySlugs = request.rawPublications.map(_.category).toSet
-    val authorSlugs = request.rawPublications.map(_.author).toSet
+    val categorySlugs = request.rawPublications.map(_.category).map(c => (c, slugify(c))).toSet
+    val authorSlugs = request.rawPublications.map(_.author).map(a => (a, slugify(a))).toSet
     val statusSlugs = request.rawPublications.map(_.status).collect { case Some(e) => e} toSet
     val categoriesF = publicationsStore.getCategories
     val authorsF = publicationsStore.getAuthors
     val statusesF = publicationsStore.getPublicationStatuses
     for {
       ((categories, authors), statuses) <- categoriesF zip authorsF zip statusesF
-      newCategories = categorySlugs &~ categories.map(_.slug).toSet
-      newAuthors = authorSlugs &~ authors.map(_.slug).toSet
+      existingCategorySlugs = categories.map(_.slug)
+      newCategories = categorySlugs.filter(c => !existingCategorySlugs.contains(c._2))
+      existingAuthorSlugs = authors.map(_.slug)
+      newAuthors = authorSlugs.filter(a => !existingAuthorSlugs.contains(a._2))
        newStatuses = statusSlugs &~ statuses.map(_.slug).toSet
-      categoryRequests = newCategories.toSeq map(NewCategoryRequest(_))
-      authorRequests = newAuthors.toSeq map(a => NewAuthorRequest(a, a))
+      categoryRequests = newCategories.toSeq map(NewCategoryRequest.tupled)
+      authorRequests = newAuthors.toSeq map(NewAuthorRequest.tupled)
        statusRequests = newStatuses.toSeq map(NewPublicationStatusRequest(_, 0))
       // could batch this at least...dumb me.
       cs <- Future.sequence(categoryRequests.map(publicationsStore.createCategory(_)))
@@ -47,7 +51,7 @@ class ImportDataController(val publicationsStore : PublicationsStore)(implicit e
     maybeAuthor <- publicationsStore.getAuthorBySlug(publication.author)
     author <- maybeAuthor.map(Future.successful).getOrElse(Future.failed(ImportDataException("author not found:" + publication.author)))
     maybeStatus <- publication.status map (publicationsStore.getPublicationStatusBySlug) getOrElse(Future.successful(None))
-    result <- publicationsStore.createPublication(NewPublicationRequest(publication.title, publication.title, Seq(author.guid), Seq(category.guid), None, None, maybeStatus.map(_.guid)))
+    result <- publicationsStore.createPublication(NewPublicationRequest(publication.title, slugify(publication.title), Seq(author.guid), Seq(category.guid), None, None, maybeStatus.map(_.guid)))
   } yield(result)
 }
 

@@ -22,9 +22,10 @@ object Authors {
 
 class Categories(tag : Tag) extends Table[Category](tag, "categories") {
   val guid = column[UUID]("guid", O.PrimaryKey)
+  def name = column[String]("name")
   def slug = column[String]("slug", O.Length(48))
   def slugIndex = index("category_slug_idx", slug, true)
-  def * = (guid, slug) <> (Category.tupled, Category.unapply _)
+  def * = (guid, name, slug) <> (Category.tupled, Category.unapply _)
 }
 
 class PublicationStatuses(tag : Tag) extends Table[PublicationStatus](tag, "publication_statuses") {

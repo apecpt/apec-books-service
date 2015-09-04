@@ -14,7 +14,7 @@ import pt.org.apec.services.books.common._
 class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext) {
   def createSchema = db.run(Tables.schema.create)
   def dropSchema = db.run(Tables.schema.drop)
-  def createCategory(category: NewCategoryRequest): Future[Category] = db.run(Queries.insertCategory(Category(createGUID, category.slug)))
+  def createCategory(category: NewCategoryRequest): Future[Category] = db.run(Queries.insertCategory(Category(createGUID, category.name, category.slug)))
     .recoverWith(mapDuplicateException)
   def getCategories: Future[Seq[Category]] = db.run(Queries.listCategories.result)
   def getCategoryBySlug(slug: String): Future[Option[Category]] = db.run(Queries.getCategoryBySlug(slug).result.headOption)
