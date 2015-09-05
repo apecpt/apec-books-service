@@ -10,7 +10,7 @@ trait BasicData extends Matchers {
   this : BaseRouteSpec =>
     
     def createLiteratura = {
-      Post("/categories", NewCategoryRequest("literatura")) ~> routes ~> check {
+      Post("/categories", NewCategoryRequest("literatura", "literatura")) ~> routes ~> check {
         status shouldBe StatusCodes.Created
         responseAs[Category]
       }
@@ -24,7 +24,7 @@ trait BasicData extends Matchers {
     }
     
       def createCorrigido = {
-        Post("/publicationStatuses", NewPublicationStatusRequest("corrigido", 0)) ~> routes ~> check {
+        Post("/publicationStatuses", NewPublicationStatusRequest("Corrigido", "corrigido", 0)) ~> routes ~> check {
         status shouldBe StatusCodes.Created
         responseAs[PublicationStatus]
       }

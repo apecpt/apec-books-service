@@ -23,7 +23,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
   def getAuthorBySlug(slug: String): Future[Option[Author]] = db.run(Queries.getAuthorBySlug(slug).result.headOption)
   def getAuthorByGUID(guid: UUID): Future[Option[Author]] = db.run(Queries.getAuthorByGUID(guid).result.headOption)
 
-  def createPublicationStatus(newPublicationStatus: NewPublicationStatusRequest): Future[PublicationStatus] = db.run(Queries.insertPublicationStatus(PublicationStatus(createGUID, newPublicationStatus.slug, newPublicationStatus.score))).recoverWith(mapDuplicateException)
+  def createPublicationStatus(newPublicationStatus: NewPublicationStatusRequest): Future[PublicationStatus] = db.run(Queries.insertPublicationStatus(PublicationStatus(createGUID, newPublicationStatus.name, newPublicationStatus.slug, newPublicationStatus.score))).recoverWith(mapDuplicateException)
   def getPublicationStatuses: Future[Seq[PublicationStatus]] = db.run(Queries.listPublicationStatuses.result)
   def getPublicationStatusBySlug(slug : String) : Future[Option[PublicationStatus]] = db.run(Queries.getPublicationStatusBySlug(slug).result.headOption)
 
@@ -76,7 +76,9 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     }
   }
   private val mapDuplicateException: PartialFunction[Throwable, Future[Nothing]] = {
-    case e: PSQLException if e.getSQLState == "23505" => Future.failed(new DuplicateFound())
+    case e: PSQLException if e.getSQLState == "23505" => {
+      Future.failed(new DuplicateFound())
+    }
   }
 
   private def createGUID = UUID.randomUUID()

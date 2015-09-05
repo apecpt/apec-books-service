@@ -16,7 +16,7 @@ import pt.org.apec.services.books.common._
 class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
 
   "Publications API" should "insert new categories" in {
-    val category = NewCategoryRequest("test")
+    val category = NewCategoryRequest("test", "teste")
     Post("/categories", category) ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.Created
       responseAs[Category].slug shouldBe category.slug
@@ -24,13 +24,13 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
   }
 
   it should "insert new categories with diferent GUIDs" in {
-    val c1 = NewCategoryRequest("c1")
+    val c1 = NewCategoryRequest("c1", "c1")
     var c1Response: Category = null
     Post("/categories", c1) ~> routes ~> check {
       status shouldBe StatusCodes.Created
       c1Response = responseAs[Category]
     }
-    val c2 = NewCategoryRequest("c2")
+    val c2 = NewCategoryRequest("c2", "c2")
     Post("/categories", c2) ~> routes ~> check {
       status shouldBe StatusCodes.Created
       c1Response.guid shouldNot be(responseAs[Category].guid)
@@ -38,7 +38,7 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
   }
 
   it should "Get inserted categories by slug" in {
-    val c1 = NewCategoryRequest("c1")
+    val c1 = NewCategoryRequest("c1", "c1")
     Post("/categories", c1) ~> routes ~> check {
       status shouldBe StatusCodes.Created
     }
@@ -55,7 +55,7 @@ class CategoriesSpec extends FlatSpec with BaseRouteSpec with Matchers {
   }
 
   it should "not allow two categories with the same slug" in {
-    val category = NewCategoryRequest("c1")
+    val category = NewCategoryRequest("c1", "c1")
     Post("/categories", category) ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.Created
     }

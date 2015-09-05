@@ -47,6 +47,7 @@ lazy val root = (project in file("."))
 resolvers += "softprops-maven" at "http://dl.bintray.com/content/softprops/maven",
 scalacOptions in Test ++= Seq ( "-Yrangepos"),
 parallelExecution in Test := false,
+fork in run := true,
 dockerBaseImage := "java:8")
 .settings(
 Revolver.settings :_*)

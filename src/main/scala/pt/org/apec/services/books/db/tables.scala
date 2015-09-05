@@ -30,10 +30,11 @@ class Categories(tag : Tag) extends Table[Category](tag, "categories") {
 
 class PublicationStatuses(tag : Tag) extends Table[PublicationStatus](tag, "publication_statuses") {
   def guid = column[UUID]("guid", O.PrimaryKey)
+  def name = column[String]("name")
   def slug = column[String]("slug", O.Length(256))
     def slugIndex = index("publication_status_slug_idx", slug, true)
   def score = column[Int]("score")
-  def * = (guid, slug, score) <> (PublicationStatus.tupled, PublicationStatus.unapply _)
+  def * = (guid, name, slug, score) <> (PublicationStatus.tupled, PublicationStatus.unapply _)
 }
 
 class Publications(tag : Tag) extends Table[Publication](tag, "publications") {

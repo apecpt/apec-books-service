@@ -20,7 +20,7 @@ trait BooksService extends HttpService with JsonProtocol {
   implicit val executionContext: ExecutionContext
 
   implicit def exceptionHandler = ExceptionHandler {
-    case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
+    case e: DuplicateFound => complete { StatusCodes.Conflict -> e}
   }
 
   def routes = categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes
