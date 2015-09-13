@@ -15,7 +15,7 @@ class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor 
   def receive = runRoute(routes)
 }
 
-trait BooksService extends HttpService with JsonProtocol {
+trait BooksService extends HttpService with JsonProtocol with PagingDirectives {
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
 
@@ -71,8 +71,13 @@ trait BooksService extends HttpService with JsonProtocol {
   def publicationRoutes = pathPrefix("publications") {
     pathEndOrSingleSlash {
       get {
-        complete {
-          publicationsStore.getPublications
+        paginated { page =>
+          complete {
+            page match {
+              case Some(Paginate(pageNumber, pageSize)) => publicationsStore.getPublications(Some((pageNumber - 1) * pageSize), Some(pageSize))
+              case _ => publicationsStore.getPublications()
+            }
+          }
         }
       } ~
         (post & entity(as[NewPublicationRequest])) { newPublication =>

@@ -41,11 +41,13 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     db.run(action) recoverWith (mapDuplicateException)
   }
 
-  def getPublications: Future[Seq[PublicationInfo]] = {
+  def getPublications(start: Option[Int] = None, end: Option[Int] = None): Future[Seq[PublicationInfo]] = {
     val q = for {
       (p, s) <- Queries.getPublications joinLeft Tables.publicationStatuses on (_.publicationStatusGUID === _.guid)
     } yield (p, s)
-    val publications = q.result
+    val withStart = start.map(i => q.drop(i)).getOrElse(q)
+    val withEnd = end.map(i => withStart.take(i)).getOrElse(withStart)
+    val publications = withStart.result
     val actions = publications flatMap { ps =>
       val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s) => mkPublicationInfo(p, s) }
       DBIO.sequence(infos)
