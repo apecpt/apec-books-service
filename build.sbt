@@ -17,10 +17,6 @@ libraryDependencies ++= Seq(
   "org.joda" % "joda-convert" % "1.7",
     "com.typesafe.play" %% "play-json" % playJsonVersion))
 
-val clientSettings = baseSettings ++ Seq(
-	libraryDependencies ++= Seq(akkaActor % "provided",
-	"io.spray" %% "spray-client" % "1.3.3")
-)
 
 val serviceLibraryDependencies = {
 	val slickV = "3.0.0"
@@ -52,16 +48,11 @@ dockerBaseImage := "java:8")
 .settings(
 Revolver.settings :_*)
 .enablePlugins (JavaAppPackaging, DockerPlugin)
-	.dependsOn(common, client)
-.aggregate(common,client)
+	.dependsOn(common)
+.aggregate(common)
 
 lazy val common = (project in file("common"))
 	.settings(commonSettings : _*)
 	.settings(name := "apec-books-common")
-
-lazy val client = (project in file("client"))
-	.settings(clientSettings : _*)
-	.settings(name := "apec-books-client")
-	.dependsOn(common)
 
 
