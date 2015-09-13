@@ -6,8 +6,7 @@ import com.github.tototoshi.slick.PostgresJodaSupport._
 import org.joda.time.DateTime
 import pt.org.apec.services.books.common._
 
-
-class Authors(tag : Tag) extends Table[Author](tag, "books") {
+class Authors(tag: Tag) extends Table[Author](tag, "books") {
   def guid = column[UUID]("guid", O.PrimaryKey)
   def name = column[String]("name")
   def slug = column[String]("slug", O.Length(256))
@@ -19,8 +18,7 @@ object Authors {
   val authors = TableQuery[Authors]
 }
 
-
-class Categories(tag : Tag) extends Table[Category](tag, "categories") {
+class Categories(tag: Tag) extends Table[Category](tag, "categories") {
   val guid = column[UUID]("guid", O.PrimaryKey)
   def name = column[String]("name")
   def slug = column[String]("slug", O.Length(48))
@@ -28,16 +26,16 @@ class Categories(tag : Tag) extends Table[Category](tag, "categories") {
   def * = (guid, name, slug) <> (Category.tupled, Category.unapply _)
 }
 
-class PublicationStatuses(tag : Tag) extends Table[PublicationStatus](tag, "publication_statuses") {
+class PublicationStatuses(tag: Tag) extends Table[PublicationStatus](tag, "publication_statuses") {
   def guid = column[UUID]("guid", O.PrimaryKey)
   def name = column[String]("name")
   def slug = column[String]("slug", O.Length(256))
-    def slugIndex = index("publication_status_slug_idx", slug, true)
+  def slugIndex = index("publication_status_slug_idx", slug, true)
   def score = column[Int]("score")
   def * = (guid, name, slug, score) <> (PublicationStatus.tupled, PublicationStatus.unapply _)
 }
 
-class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
+class Publications(tag: Tag) extends Table[Publication](tag, "publications") {
   def guid = column[UUID]("guid", O.PrimaryKey)
   def title = column[String]("title", O.Length(1024))
   def slug = column[String]("slug", O.Length(256))
@@ -51,8 +49,7 @@ class Publications(tag : Tag) extends Table[Publication](tag, "publications") {
   def * = (guid, title, slug, publicationYear, createdAt, updatedAt, notes, publicationStatusGUID) <> (Publication.tupled, Publication.unapply _)
 }
 
-
-class PublicationAuthors(tag : Tag) extends Table[(UUID, UUID)](tag, "publication_author") {
+class PublicationAuthors(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_author") {
   def authorGUID = column[UUID]("author_GUID")
   def publicationGUID = column[UUID]("publication_GUID")
   def author = foreignKey("author_fk", authorGUID, Authors.authors)(_.guid)
@@ -60,8 +57,8 @@ class PublicationAuthors(tag : Tag) extends Table[(UUID, UUID)](tag, "publicatio
   def publicationAuthorIndex = index("publication_author_idx", (authorGUID, publicationGUID), true)
   def * = (authorGUID, publicationGUID)
 }
-    
-class PublicationCategories(tag : Tag) extends Table[(UUID, UUID)](tag, "publication_category") {
+
+class PublicationCategories(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_category") {
   def categoryGUID = column[UUID]("category_guid")
   def publicationGUID = column[UUID]("publication_guid")
   def categoryPublicationIndex = index("category_publication_idx", (categoryGUID, publicationGUID), true)

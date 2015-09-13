@@ -27,7 +27,7 @@ object Boot {
   def main(args: Array[String]) {
     args.toList match {
       case "initdb" :: nil => initDB()
-      case nil             => run()
+      case nil => run()
       case _ => {
         println("unknown arguemtns")
         sys.exit()

@@ -25,7 +25,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
 
   def createPublicationStatus(newPublicationStatus: NewPublicationStatusRequest): Future[PublicationStatus] = db.run(Queries.insertPublicationStatus(PublicationStatus(createGUID, newPublicationStatus.name, newPublicationStatus.slug, newPublicationStatus.score))).recoverWith(mapDuplicateException)
   def getPublicationStatuses: Future[Seq[PublicationStatus]] = db.run(Queries.listPublicationStatuses.result)
-  def getPublicationStatusBySlug(slug : String) : Future[Option[PublicationStatus]] = db.run(Queries.getPublicationStatusBySlug(slug).result.headOption)
+  def getPublicationStatusBySlug(slug: String): Future[Option[PublicationStatus]] = db.run(Queries.getPublicationStatusBySlug(slug).result.headOption)
 
   def createPublication(newPublication: NewPublicationRequest): Future[PublicationInfo] = {
     val guid = createGUID
@@ -62,7 +62,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     val action = q.result.headOption
       .flatMap {
         case Some((p, s)) => mkPublicationInfo(p, s).map(Some.apply)
-        case _          => DBIO.successful(None)
+        case _ => DBIO.successful(None)
       }
     db.run(action)
   }
