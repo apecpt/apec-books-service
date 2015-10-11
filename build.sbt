@@ -8,7 +8,7 @@ val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaV
 val baseSettings = Seq(
 	organization := "pt.org.apec",
 	version := "0.1",
-	scalaVersion  := "2.11.6",
+	scalaVersion  := "2.11.7",
 	scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"))
 
 val commonSettings = baseSettings ++ Seq(
@@ -19,7 +19,7 @@ libraryDependencies ++= Seq(
 
 
 val serviceLibraryDependencies = {
-	val slickV = "3.0.0"
+	val slickV = "3.0.3"
 	Seq(akkaActor,
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
