@@ -28,7 +28,13 @@ trait BooksService extends HttpService with JsonProtocol with PagingDirectives {
   def categoryRoutes = pathPrefix("categories") {
     pathEndOrSingleSlash {
       get {
-        complete(publicationsStore.getCategories)
+        parameters("counts".as[Boolean].?(false)) { counts =>
+          if (counts) {
+            complete(publicationsStore.getCategoryCounts)
+          } else {
+            complete(publicationsStore.getCategories)
+          }
+        }
       } ~
         (post & entity(as[NewCategoryRequest])) { newCategory =>
           complete {
