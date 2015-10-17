@@ -34,5 +34,6 @@ package object common {
     require(slug.nonEmpty, "Slug must not be empty")
     require(title.nonEmpty, "Title must not be empty")
   }
+  case class WithPublicationCount[T](element: T, publicationCount: Int)
 
 }

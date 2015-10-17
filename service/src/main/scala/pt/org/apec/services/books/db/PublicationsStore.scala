@@ -83,7 +83,7 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
     }
   }
 
-  def getCategoryCounts: Future[Seq[(Category, Int)]] = db.run(Queries.getCategoryCounts.result)
+  def getCategoryCounts: Future[Seq[WithPublicationCount[Category]]] = db.run(Queries.getCategoryCounts.result.map(s => s.map(t => WithPublicationCount(t._1, t._2))))
 
   private def createGUID = UUID.randomUUID()
 
@@ -116,11 +116,12 @@ class PublicationsStore(db: Database)(implicit executorContext: ExecutionContext
 
     def getCategoryCounts = {
       val q = (for {
-        (c, pcs) <- listCategories leftJoin publicationCategories on (_.guid === _.categoryGUID)
+        (c, pcs) <- listCategories joinLeft publicationCategories on (_.guid === _.categoryGUID)
       } yield (c, pcs)).groupBy(_._1)
-      q map {
-        case (c, p) => (c, p.length)
+      val q2 = q map {
+        case (c, p) => (c, p.map(_._2.map(_.publicationGUID)).countDistinct)
       }
+      q2
     }
 
   }

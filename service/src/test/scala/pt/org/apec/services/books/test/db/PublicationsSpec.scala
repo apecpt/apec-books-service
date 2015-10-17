@@ -41,4 +41,25 @@ class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with Ba
       responseAs[PublicationInfo].publicationStatus shouldBe defined
     }
   }
+
+  it should "Get publication counts for empty categories" in {
+    val literatura = createLiteratura
+    Get(s"/categories?counts=true") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+      val r = responseAs[Seq[WithPublicationCount[Category]]]
+      r should have size 1
+      r.head.publicationCount shouldBe 0
+    }
+  }
+
+  it should "Get publication countss when books exist" in {
+    val memorial = createMemorial
+    val categoryGuid = memorial.categories(0).guid
+    Get("/categories?counts=true") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+      val r = responseAs[Seq[WithPublicationCount[Category]]]
+      r should have size 1
+      r(0).publicationCount shouldBe 1
+    }
+  }
 }
