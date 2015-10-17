@@ -36,6 +36,9 @@ val serviceLibraryDependencies = {
 }
 
 lazy val root = (project in file("."))
+	.aggregate(common, service)
+
+lazy val service = (project in file("service"))
 	.settings(commonSettings : _*)
 	.settings(name := "apec-books-service")
 	.settings(libraryDependencies ++= serviceLibraryDependencies)
@@ -49,7 +52,6 @@ dockerBaseImage := "java:8")
 Revolver.settings :_*)
 .enablePlugins (JavaAppPackaging, DockerPlugin)
 	.dependsOn(common)
-.aggregate(common)
 
 lazy val common = (project in file("common"))
 	.settings(commonSettings : _*)
