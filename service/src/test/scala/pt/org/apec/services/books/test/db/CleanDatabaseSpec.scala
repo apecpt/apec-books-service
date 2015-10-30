@@ -9,20 +9,26 @@ import org.scalatest.FlatSpec
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValueFactory
 import pt.org.apec.services.books.db.PublicationsStore
-import slick.driver.PostgresDriver.api.Database
+import slick.driver.PostgresDriver
+import PostgresDriver.api.Database
 import org.scalatest.concurrent.ScalaFutures
+import godiva.slick._
 
 /**
  * @author ragb
  */
 trait CleanDatabaseSpec extends FlatSpec with BeforeAndAfter {
   val database = Database.forConfig("db.test")
-  val publicationsStore = new PublicationsStore(database)
+  val publicationsStore = new PublicationsStore with DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext {
+    val driver = PostgresDriver
+    val database = CleanDatabaseSpec.this.database
+    val executionContext = scala.concurrent.ExecutionContext.Implicits.global
+  }
   before {
-    Await.result(publicationsStore.createSchema, 10 seconds)
+    Await.result(publicationsStore.createTables, 10 seconds)
   }
 
   after {
-    Await.result(publicationsStore.dropSchema, 10 seconds)
+    Await.result(publicationsStore.dropTables, 10 seconds)
   }
 }

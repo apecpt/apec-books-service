@@ -1,7 +1,8 @@
 
 val playJsonVersion = "2.4.2"
-val akkaV = "2.3.11"
+val akkaV = "2.3.12"
 val sprayV = "1.3.3"
+val godivaVersion = "0.1.0"
 
 val akkaActor = "com.typesafe.akka" %% "akka-actor" % akkaV
 
@@ -19,19 +20,21 @@ libraryDependencies ++= Seq(
 
 
 val serviceLibraryDependencies = {
-	val slickV = "3.0.3"
+	val slickV = "3.1.0"
 	Seq(akkaActor,
   "io.spray" %% "spray-can" % sprayV,
 "io.spray" %% "spray-client" % sprayV,
-  "io.spray" %% "spray-routing" % sprayV,
+  "io.spray" %% "spray-routing-shapeless2" % sprayV,
   "com.typesafe.slick" %% "slick" % slickV,
   "io.spray" %% "spray-testkit" % sprayV,
+  "com.typesafe.slick" %% "slick-hikaricp" % slickV,
 "org.scalatest" %% "scalatest" % "2.2.4" % "test",
       "org.postgresql" % "postgresql" % "9.4-1201-jdbc4",
-"com.zaxxer" % "HikariCP" % "2.3.7",
-"ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
-"com.typesafe.akka" %% "akka-slf4j" % akkaV,
-  "com.github.tototoshi" %% "slick-joda-mapper" % "2.0.0"
+    "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
+    "com.typesafe.akka" %% "akka-slf4j" % akkaV,
+  "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
+  "com.ruiandrebatista.godiva" %% "godiva-slick" % godivaVersion,
+  "com.ruiandrebatista.godiva" %% "godiva-spray" % godivaVersion
 )
 }
 

@@ -9,9 +9,10 @@ import akka.actor.Props
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.Await
-import slick.driver.PostgresDriver.api._
-import pt.org.apec.services.books.db.Tables
 import pt.org.apec.services.books.db.PublicationsStore
+import godiva.slick._
+import slick.driver.PostgresDriver
+import PostgresDriver.api.Database
 
 /**
  * @author ragb
@@ -22,7 +23,11 @@ object Boot {
   import system.dispatcher
 
   val db = Database.forConfig("db.default", conf)
-  val store = new PublicationsStore(db)
+  val store = new PublicationsStore with DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext {
+    val driver = PostgresDriver
+    val database = db
+    val executionContext = system.dispatcher
+  }
 
   def main(args: Array[String]) {
     args.toList match {
@@ -46,7 +51,7 @@ object Boot {
 
   def initDB() {
     println("Initializing db schema")
-    Await.result(store.createSchema, 10 seconds)
+    Await.result(store.createTables, 10 seconds)
     println("done")
     sys.exit()
   }
