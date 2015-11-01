@@ -49,16 +49,15 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     database.run(action) recoverWith (mapDuplicateException)
   }
 
-  
-  def getPublications(paginationRequest: PaginationRequest, order: PublicationOrder=PublicationOrder(CreatedAt, Desc)): Future[PaginatedResult[PublicationInfo]] = {
+  def getPublications(paginationRequest: PaginationRequest, order: PublicationOrder = PublicationOrder(CreatedAt, Desc)): Future[PaginatedResult[PublicationInfo]] = {
     val q = for {
       (p, s) <- Queries.getPublications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid)
     } yield (p, s)
     // TODO: use the direction attribute.
     val sortedQ = order.attribute match {
-        case `Title` => q.sortBy(_._1.title.asc)
-        case `CreatedAt` => q.sortBy(_._1.createdAt.desc)
-        case `UpdatedAt` => q.sortBy(_._1.updatedAt.desc)
+      case `Title` => q.sortBy(_._1.title.asc)
+      case `CreatedAt` => q.sortBy(_._1.createdAt.desc)
+      case `UpdatedAt` => q.sortBy(_._1.updatedAt.desc)
     }
     val publications = sortedQ.paginated(paginationRequest)
     val actions = publications flatMap {
@@ -141,5 +140,5 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
 
 }
 
-case class DatabaseException(errorCode: String) extends Throwable
-class DuplicateFound extends DatabaseException("error.duplicateFound")
+case class DatabaseException(errorCode: String, message: String) extends Exception(message)
+class DuplicateFound extends DatabaseException("error.duplicateFound", "Entry already exists")

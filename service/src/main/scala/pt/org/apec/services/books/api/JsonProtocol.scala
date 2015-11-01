@@ -11,10 +11,16 @@ import godiva.core.pagination._
 import godiva.spray.json.PlayJsonProtocol
 
 trait JsonProtocol extends PlayJsonSupport with JsonFormaters with PlayJsonProtocol {
+  implicit val throwableWrites = new Writes[Throwable] {
+    def writes(t: Throwable) = JsObject(Map("type" -> JsString(t.getClass.getName), "message" -> JsString(t.getMessage)))
+  }
   implicit val DuplicateFoundWrites = Json.writes[DatabaseException]
   import ImportDataController._
   implicit val rawPublicationFormat = Json.format[RawPublication]
   implicit val importDataResultFormat = Json.format[ImportDataResult]
   implicit val publicationREsultReads = paginatedResultReads[PublicationInfo]
+
+  // preety print
+  implicit val printer = Json.prettyPrint _
 }
 

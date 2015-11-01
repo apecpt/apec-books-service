@@ -10,6 +10,7 @@ import spray.httpx.PlayJsonSupport._
 import scala.concurrent.ExecutionContext
 import godiva.spray.pagination.PaginationDirectives
 import godiva.spray.json.PlayJsonProtocol
+import scala.util.control.NonFatal
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {
   def actorRefFactory = context
@@ -17,12 +18,13 @@ class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor 
   def receive = runRoute(routes)
 }
 
-trait BooksService extends HttpService with JsonProtocol with PaginationDirectives {
+trait BooksService extends HttpService with JsonProtocol with PaginationDirectives with PublicationOrderDirectives {
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
 
   implicit def exceptionHandler = ExceptionHandler {
     case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
+    case NonFatal(e) => complete { StatusCodes.InternalServerError -> e }
   }
 
   def routes = categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes
@@ -80,8 +82,10 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
     pathEndOrSingleSlash {
       get {
         paginated { paginationRequest =>
-          complete {
-            publicationsStore.getPublications(paginationRequest)
+          publicationsSorted { order =>
+            complete {
+              publicationsStore.getPublications(paginationRequest, order)
+            }
           }
         }
       } ~
