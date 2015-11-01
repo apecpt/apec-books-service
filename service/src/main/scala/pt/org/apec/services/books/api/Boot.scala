@@ -41,6 +41,7 @@ object Boot {
   }
 
   def run() {
+    initDBIfNotExist()
     val httpInterface = conf.getString("http.interface")
     val httpPort = conf.getInt("http.port")
 
@@ -49,6 +50,9 @@ object Boot {
     IO(Http) ? Http.Bind(booksServiceActor, interface = httpInterface, port = httpPort)
   }
 
+  def initDBIfNotExist() {
+    Await.result(store.createTablesIfNotExist, 10 seconds)
+  }
   def initDB() {
     println("Initializing db schema")
     Await.result(store.createTables, 10 seconds)

@@ -10,7 +10,17 @@ val baseSettings = Seq(
 	organization := "pt.org.apec",
 	version := "0.1",
 	scalaVersion  := "2.11.7",
-	scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"))
+	scalacOptions in Compile ++= Seq(
+    "-encoding", "UTF-8",
+    "-deprecation",
+    "-unchecked",
+    "-feature",
+    "-Xlint",
+    "-Ywarn-unused-import",
+    "-language:implicitConversions",
+    "-language:postfixOps",
+    "-Xmax-classfile-name", "255" //due to pickling macros
+))
 
 val commonSettings = baseSettings ++ Seq(
 libraryDependencies ++= Seq(
