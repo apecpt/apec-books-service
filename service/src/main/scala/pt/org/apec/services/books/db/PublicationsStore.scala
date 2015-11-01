@@ -8,6 +8,7 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import org.postgresql.util.PSQLException
 import pt.org.apec.services.books.common._
+import pt.org.apec.services.books.common.PublicationSorting._
 import godiva.core.pagination.PaginationRequest
 import godiva.core.pagination.PaginatedResult
 
@@ -48,11 +49,18 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     database.run(action) recoverWith (mapDuplicateException)
   }
 
-  def getPublications(paginationRequest: PaginationRequest): Future[PaginatedResult[PublicationInfo]] = {
+  
+  def getPublications(paginationRequest: PaginationRequest, order: PublicationOrder=PublicationOrder(CreatedAt, Desc)): Future[PaginatedResult[PublicationInfo]] = {
     val q = for {
       (p, s) <- Queries.getPublications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid)
     } yield (p, s)
-    val publications = q.sortBy(_._1.createdAt).paginated(paginationRequest)
+    // TODO: use the direction attribute.
+    val sortedQ = order.attribute match {
+        case `Title` => q.sortBy(_._1.title.asc)
+        case `CreatedAt` => q.sortBy(_._1.createdAt.desc)
+        case `UpdatedAt` => q.sortBy(_._1.updatedAt.desc)
+    }
+    val publications = sortedQ.paginated(paginationRequest)
     val actions = publications flatMap {
       case PaginatedResult(ps, page, totals) =>
         val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s) => mkPublicationInfo(p, s) }

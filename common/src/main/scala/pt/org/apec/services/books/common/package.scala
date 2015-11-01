@@ -1,9 +1,8 @@
-package pt.org.apec.services.books
+package pt.org.apec.services.books.common
 
 /**
  * @author ragb
  */
-package object common {
   import java.util.UUID
   import org.joda.time.DateTime
 
@@ -36,4 +35,14 @@ package object common {
   }
   case class WithPublicationCount[T](element: T, publicationCount: Int)
 
+  object PublicationSorting {
+sealed   trait SortAttribute
+  case object Title extends SortAttribute
+  case object CreatedAt extends SortAttribute
+  case object UpdatedAt extends SortAttribute
+  
+  sealed trait Direction
+  case object Asc extends Direction
+  case object Desc extends Direction
+  case class PublicationOrder(attribute: SortAttribute, direction: Direction=Asc)
 }

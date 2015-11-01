@@ -9,7 +9,7 @@ class AuthorsSpec extends BaseRouteSpec with Matchers {
 
   val rui = NewAuthorRequest("Rui Batista", "rui-batista")
 
-  def createRui = {
+  def createRui() {
     Post("/authors", rui) ~> routes ~> check {
       status shouldBe StatusCodes.Created
     }

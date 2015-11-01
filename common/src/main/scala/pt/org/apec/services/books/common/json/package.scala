@@ -1,4 +1,4 @@
-package pt.org.apec.services.books.common
+package pt.org.apec.services.books.common.json
 
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -8,7 +8,6 @@ import pt.org.apec.services.books.common._
 /**
  * @author ragb
  */
-package object json {
   trait JsonFormaters {
     import JodaConverters._
     implicit val newCategoryRequestFormat = Json.format[NewCategoryRequest]
@@ -30,5 +29,3 @@ package object json {
   }
 
   object JsonFormaters extends JsonFormaters
-
-}
