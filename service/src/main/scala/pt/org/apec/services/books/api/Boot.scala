@@ -32,7 +32,7 @@ object Boot {
   def main(args: Array[String]) {
     args.toList match {
       case "initdb" :: nil => initDB()
-      case nil => run()
+      case `Nil` => run()
       case _ => {
         println("unknown arguemtns")
         sys.exit()

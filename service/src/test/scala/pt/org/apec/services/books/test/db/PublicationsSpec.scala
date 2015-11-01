@@ -6,13 +6,17 @@ import pt.org.apec.services.books.db._
 import pt.org.apec.services.books.common._
 
 import spray.http._
+import spray.httpx.unmarshalling._
+import spray.httpx.PlayJsonSupport._
+import godiva.spray.json.PlayJsonProtocol
+import godiva.core.pagination._
+import pt.org.apec.services.books.common.json.JsonFormaters
 
 class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with BasicData {
-
   "Publications API" should "Return an empty list when no publications exists" in {
     Get("/publications") ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.OK
-      responseAs[Seq[PublicationInfo]] should have size 0
+      responseAs[PaginatedResult[PublicationInfo]].elements should have size 0
     }
   }
 
@@ -33,7 +37,7 @@ class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with Ba
   it should "Get publications after created" in {
     val memorial = createMemorial
     Get("/publications") ~> sealRoute(routes) ~> check {
-      responseAs[Seq[PublicationInfo]] should have size 1
+      responseAs[PaginatedResult[PublicationInfo]].elements should have size 1
     }
     Get("/publications/" + memorial.guid.toString) ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.OK

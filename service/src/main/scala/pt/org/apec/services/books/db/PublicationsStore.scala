@@ -1,7 +1,6 @@
 package pt.org.apec.services.books.db
 
 import godiva.slick._
-
 import slick.driver.PostgresDriver
 import scala.concurrent.ExecutionContext
 import java.util.UUID
@@ -9,11 +8,16 @@ import org.joda.time.DateTime
 import scala.concurrent.Future
 import org.postgresql.util.PSQLException
 import pt.org.apec.services.books.common._
+import godiva.core.pagination.PaginationRequest
+import godiva.core.pagination.PaginatedResult
+
+// For usage within sortby.
+import com.github.tototoshi.slick.PostgresJodaSupport._
 
 /**
  * @author ragb
  */
-trait PublicationsStore extends SchemaManagement with TablesSchema with TablesComponent {
+trait PublicationsStore extends SchemaManagement with TablesSchema with TablesComponent with Pagination {
   this: DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext =>
   import driver.api._
   override def tables = super[TablesComponent].tables
@@ -44,16 +48,15 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     database.run(action) recoverWith (mapDuplicateException)
   }
 
-  def getPublications(start: Option[Int] = None, end: Option[Int] = None): Future[Seq[PublicationInfo]] = {
+  def getPublications(paginationRequest: PaginationRequest): Future[PaginatedResult[PublicationInfo]] = {
     val q = for {
       (p, s) <- Queries.getPublications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid)
     } yield (p, s)
-    val withStart = start.map(i => q.drop(i)).getOrElse(q)
-    val withEnd = end.map(i => withStart.take(i)).getOrElse(withStart)
-    val publications = withStart.result
-    val actions = publications flatMap { ps =>
-      val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s) => mkPublicationInfo(p, s) }
-      DBIO.sequence(infos)
+    val publications = q.sortBy(_._1.createdAt).paginated(paginationRequest)
+    val actions = publications flatMap {
+      case PaginatedResult(ps, page, totals) =>
+        val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s) => mkPublicationInfo(p, s) }
+        DBIO.sequence(infos).map(PaginatedResult(_, page, totals))
     }
     database.run(actions)
   }

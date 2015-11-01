@@ -49,6 +49,8 @@ trait TablesComponent extends TablesSchema {
     def updatedAt = column[Option[DateTime]]("updated_at")
     def notes = column[Option[String]]("notes", O.Length(1024))
     def slugIndex = index("publication_slug_idx", slug, true)
+    def titleIndex = index("publication_title_idx", title, false)
+    def createdAtIndex = index("publication_createdat_idx", createdAt, false)
     def publicationStatusGUID = column[Option[UUID]]("status_guid")
     def publicationStatus = foreignKey("publication_status_fk", publicationStatusGUID, publicationStatuses)(_.guid.?)
     def * = (guid, title, slug, publicationYear, createdAt, updatedAt, notes, publicationStatusGUID) <> (Publication.tupled, Publication.unapply _)

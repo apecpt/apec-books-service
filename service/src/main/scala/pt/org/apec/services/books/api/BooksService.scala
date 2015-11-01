@@ -8,6 +8,8 @@ import pt.org.apec.services.books.common._
 import spray.http._
 import spray.httpx.PlayJsonSupport._
 import scala.concurrent.ExecutionContext
+import godiva.spray.pagination.PaginationDirectives
+import godiva.spray.json.PlayJsonProtocol
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {
   def actorRefFactory = context
@@ -15,7 +17,7 @@ class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor 
   def receive = runRoute(routes)
 }
 
-trait BooksService extends HttpService with JsonProtocol with PagingDirectives {
+trait BooksService extends HttpService with JsonProtocol with PaginationDirectives {
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
 
@@ -77,12 +79,9 @@ trait BooksService extends HttpService with JsonProtocol with PagingDirectives {
   def publicationRoutes = pathPrefix("publications") {
     pathEndOrSingleSlash {
       get {
-        paginated { page =>
+        paginated { paginationRequest =>
           complete {
-            page match {
-              case Some(Paginate(pageNumber, pageSize)) => publicationsStore.getPublications(Some((pageNumber - 1) * pageSize), Some(pageSize))
-              case _ => publicationsStore.getPublications()
-            }
+            publicationsStore.getPublications(paginationRequest)
           }
         }
       } ~
