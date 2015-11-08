@@ -8,7 +8,7 @@ import pt.org.apec.services.books.common._
 import spray.http._
 import spray.httpx.unmarshalling._
 import spray.httpx.PlayJsonSupport._
-import godiva.spray.json.PlayJsonProtocol
+import godiva.json.PlayJsonProtocol
 import godiva.core.pagination._
 import pt.org.apec.services.books.common.json.JsonFormaters
 

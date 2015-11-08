@@ -9,7 +9,7 @@ import spray.http._
 import spray.httpx.PlayJsonSupport._
 import scala.concurrent.ExecutionContext
 import godiva.spray.pagination.PaginationDirectives
-import godiva.spray.json.PlayJsonProtocol
+import godiva.json.PlayJsonProtocol
 import scala.util.control.NonFatal
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {

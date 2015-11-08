@@ -44,7 +44,8 @@ val serviceLibraryDependencies = {
     "com.typesafe.akka" %% "akka-slf4j" % akkaV,
   "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
   "com.ruiandrebatista.godiva" %% "godiva-slick" % godivaVersion,
-  "com.ruiandrebatista.godiva" %% "godiva-spray" % godivaVersion
+  "com.ruiandrebatista.godiva" %% "godiva-spray" % godivaVersion,
+  "com.ruiandrebatista.godiva" %% "godiva-play-json" % godivaVersion
 )
 }
 

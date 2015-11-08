@@ -8,7 +8,7 @@ import pt.org.apec.services.books.common._
 import pt.org.apec.services.books.common.json._
 import pt.org.apec.services.books.db._
 import godiva.core.pagination._
-import godiva.spray.json.PlayJsonProtocol
+import godiva.json.PlayJsonProtocol
 
 trait JsonProtocol extends PlayJsonSupport with JsonFormaters with PlayJsonProtocol {
   implicit val throwableWrites = new Writes[Throwable] {
