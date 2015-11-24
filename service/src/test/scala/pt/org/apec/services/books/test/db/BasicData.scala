@@ -28,4 +28,14 @@ trait BasicData extends Matchers {
       responseAs[PublicationStatus]
     }
   }
+  def createMemorial: PublicationInfo = {
+    val request = NewPublicationRequest("Memorial do Convento", "memorial-do-convento", Seq(createSaramago.guid), Seq(createLiteratura.guid), Some(1978), publicationStatusGUID = Some(createCorrigido.guid))
+    Post("/publications", request) ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.Created
+      responseAs[PublicationInfo].authors.map(_.guid) should contain(request.authors.head)
+      responseAs[PublicationInfo].publicationStatus shouldBe defined
+      responseAs[PublicationInfo]
+    }
+  }
+
 }

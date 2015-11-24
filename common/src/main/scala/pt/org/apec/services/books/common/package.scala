@@ -33,6 +33,10 @@ case class NewPublicationRequest(title: String, slug: String, authors: Seq[UUID]
   require(slug.nonEmpty, "Slug must not be empty")
   require(title.nonEmpty, "Title must not be empty")
 }
+
+case class PublicationFile(guid: UUID, publicationGUID: UUID, name: String, contentType: String, size: Long, url: String, addedAt: DateTime = DateTime.now(), available: Boolean = true)
+case class NewPublicationFileRequest(name: String, contentType: String, size: Long, url: String)
+
 case class WithPublicationCount[T](element: T, publicationCount: Int)
 
 object PublicationSorting {

@@ -11,6 +11,13 @@ import scala.concurrent.ExecutionContext
 import godiva.spray.pagination.PaginationDirectives
 import godiva.json.PlayJsonProtocol
 import scala.util.control.NonFatal
+import akka.event.Logging
+import akka.event.LoggingAdapter
+import spray.util.LoggingContext
+
+import scalaz._
+import Scalaz._
+import scalaz.OptionT._
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {
   def actorRefFactory = context
@@ -24,10 +31,12 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
 
   implicit def exceptionHandler = ExceptionHandler {
     case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
-    case NonFatal(e) => complete { StatusCodes.InternalServerError -> e }
+    case NonFatal(e) => complete {
+      StatusCodes.InternalServerError -> e
+    }
   }
 
-  def routes = categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes
+  def routes = logRequestResponse("routes", Logging.InfoLevel) { categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes }
 
   def categoryRoutes = pathPrefix("categories") {
     pathEndOrSingleSlash {
@@ -94,15 +103,35 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
             StatusCodes.Created -> publicationsStore.createPublication(newPublication)
           }
         }
-    } ~
-      path(JavaUUID) { guid =>
+    }
+  } ~
+    pathPrefix(Segment) { slug =>
+      pathEndOrSingleSlash {
         (get & rejectEmptyResponse) {
           complete {
-            publicationsStore.getPublicationByGUID(guid)
+            publicationsStore.getPublicationBySlug(slug)
           }
         }
-      }
-  }
+      } ~
+        path("files") {
+          (get & rejectEmptyResponse) {
+            complete {
+              (for {
+                guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
+                files <- OptionT(publicationsStore.getPublicationFiles(guid).map(_.some))
+              } yield (files)).run
+            }
+          } ~
+            (post & entity(as[NewPublicationFileRequest])) { request =>
+              complete {
+                (for {
+                  guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
+                  result <- OptionT(publicationsStore.createPublicationFile(guid, request).map(_.some))
+                } yield (StatusCodes.Created -> result)).run
+              }
+            }
+        }
+    }
 
   def publicationStatusesRoutes = pathPrefix("publicationStatuses") {
     pathEndOrSingleSlash {

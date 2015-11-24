@@ -68,10 +68,25 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     database.run(actions)
   }
 
+  def getPublicationGUIDFromSlug(slug: String): Future[Option[UUID]] = database.run(publications.filter(_.slug === slug).map(_.guid).result.headOption)
   def getPublicationByGUID(guid: UUID): Future[Option[PublicationInfo]] = {
     // This gets confusing using a for compreension
     val q = for {
       (p, s) <- publications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid) if p.guid === guid
+    } yield (p, s)
+
+    val action = q.result.headOption
+      .flatMap {
+        case Some((p, s)) => mkPublicationInfo(p, s).map(Some.apply)
+        case _ => DBIO.successful(None)
+      }
+    database.run(action)
+  }
+
+  def getPublicationBySlug(slug: String): Future[Option[PublicationInfo]] = {
+    // This gets confusing using a for compreension
+    val q = for {
+      (p, s) <- publications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid) if p.slug === slug
     } yield (p, s)
 
     val action = q.result.headOption
@@ -95,6 +110,9 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
       Future.failed(new DuplicateFound())
     }
   }
+
+  def createPublicationFile(publicationGUID: UUID, request: NewPublicationFileRequest): Future[PublicationFile] = database.run(Queries.insertPublicationFile(publicationGUID, request)).recoverWith(mapDuplicateException)
+  def getPublicationFiles(publicationGUID: UUID): Future[Seq[PublicationFile]] = database.run(Queries.getPublicationFiles(publicationGUID).result)
 
   def getCategoryCounts: Future[Seq[WithPublicationCount[Category]]] = database.run(Queries.getCategoryCounts.result.map(s => s.map(t => WithPublicationCount(t._1, t._2))))
 
@@ -125,6 +143,9 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
       (_, category) <- publicationCategories.filter(_.publicationGUID === publicationGUID) join categories on (_.categoryGUID === _.guid)
     } yield (category)
     val getPublications = publications
+
+    def getPublicationFiles(publicationGUID: UUID) = publicationFiles.filter(_.publicationGUID === publicationGUID).filter(_.available === true)
+    def insertPublicationFile(publicationGUID: UUID, request: NewPublicationFileRequest) = (publicationFiles returning publicationFiles.map(_.guid) into ((p, guid) => p)) += PublicationFile(createGUID, publicationGUID, request.name, request.contentType, request.size, request.url)
 
     def getCategoryCounts = {
       val q = (for {

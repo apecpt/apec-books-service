@@ -19,10 +19,6 @@ trait TablesComponent extends TablesSchema {
     def * = (guid, name, slug) <> (Author.tupled, Author.unapply _)
   }
 
-  object Authors {
-    val authors = TableQuery[Authors]
-  }
-
   class Categories(tag: Tag) extends Table[Category](tag, "categories") {
     val guid = column[UUID]("guid", O.PrimaryKey)
     def name = column[String]("name")
@@ -59,7 +55,7 @@ trait TablesComponent extends TablesSchema {
   class PublicationAuthors(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_author") {
     def authorGUID = column[UUID]("author_GUID")
     def publicationGUID = column[UUID]("publication_GUID")
-    def author = foreignKey("author_fk", authorGUID, Authors.authors)(_.guid)
+    def author = foreignKey("author_fk", authorGUID, authors)(_.guid)
     def publication = foreignKey("publication_fk", publicationGUID, publications)(_.guid)
     def publicationAuthorIndex = index("publication_author_idx", (authorGUID, publicationGUID), true)
     def * = (authorGUID, publicationGUID)
@@ -73,12 +69,27 @@ trait TablesComponent extends TablesSchema {
     def category = foreignKey("category_fk", categoryGUID, categories)(_.guid)
     def * = (categoryGUID, publicationGUID)
   }
+
+  class PublicationFiles(tag: Tag) extends Table[PublicationFile](tag, "publication_files") {
+    def guid = column[UUID]("guid", O.PrimaryKey)
+    def name = column[String]("name", O.Length(256))
+    def contentType = column[String]("content_type", O.Length(64))
+    def size = column[Long]("size")
+    def url = column[String]("url")
+    def urlIndex = index("url_idx", url, true)
+    def addedAt = column[DateTime]("added_at")
+    def available = column[Boolean]("available", O.Default(true))
+    def publicationGUID = column[UUID]("publication_guid")
+    def publication = foreignKey("publication_fk", publicationGUID, publications)(_.guid)
+    def * = (guid, publicationGUID, name, contentType, size, url, addedAt, available) <> (PublicationFile.tupled, PublicationFile.unapply _)
+  }
   val authors = TableQuery[Authors]
   val publications = TableQuery[Publications]
   val categories = TableQuery[Categories]
   val publicationAuthors = TableQuery[PublicationAuthors]
   val publicationCategories = TableQuery[PublicationCategories]
   val publicationStatuses = TableQuery[PublicationStatuses]
-  override def tables = Seq(authors, publications, categories, publicationAuthors, publicationCategories, publicationStatuses)
+  val publicationFiles = TableQuery[PublicationFiles]
+  override def tables = Seq(authors, publications, categories, publicationAuthors, publicationCategories, publicationStatuses, publicationFiles)
 }
 

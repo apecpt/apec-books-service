@@ -18,6 +18,8 @@ trait JsonFormaters {
   implicit val newPublicationStatusRequestFormat = Json.format[NewPublicationStatusRequest]
   implicit val publicationStatusFormat = Json.format[PublicationStatus]
   implicit val publicationInfoFormat = Json.format[PublicationInfo]
+  implicit val publicationFileFormat = Json.format[PublicationFile]
+  implicit val newPublicationFileRequestFormat = Json.format[NewPublicationFileRequest]
   implicit def withPublicationCountWrites[T: Writes] = new Writes[WithPublicationCount[T]] {
     def writes(e: WithPublicationCount[T]) = {
       implicitly[Writes[T]].writes(e.element).asInstanceOf[JsObject] + ("publicationCount" -> Json.toJson(e.publicationCount))

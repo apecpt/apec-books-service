@@ -43,6 +43,7 @@ val serviceLibraryDependencies = {
     "ch.qos.logback" % "logback-classic" % "1.1.3" % "runtime",
     "com.typesafe.akka" %% "akka-slf4j" % akkaV,
   "com.github.tototoshi" %% "slick-joda-mapper" % "2.1.0",
+  "org.scalaz" %% "scalaz-core" % "7.1.5",
   "com.ruiandrebatista.godiva" %% "godiva-slick" % godivaVersion,
   "com.ruiandrebatista.godiva" %% "godiva-spray" % godivaVersion,
   "com.ruiandrebatista.godiva" %% "godiva-play-json" % godivaVersion

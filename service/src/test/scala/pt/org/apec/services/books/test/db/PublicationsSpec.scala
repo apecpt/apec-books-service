@@ -24,22 +24,12 @@ class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with Ba
     createMemorial
   }
 
-  def createMemorial: PublicationInfo = {
-    val request = NewPublicationRequest("Memorial do Convento", "memorial-do-convento", Seq(createSaramago.guid), Seq(createLiteratura.guid), Some(1978), publicationStatusGUID = Some(createCorrigido.guid))
-    Post("/publications", request) ~> sealRoute(routes) ~> check {
-      status shouldBe StatusCodes.Created
-      responseAs[PublicationInfo].authors.map(_.guid) should contain(request.authors.head)
-      responseAs[PublicationInfo].publicationStatus shouldBe defined
-      responseAs[PublicationInfo]
-    }
-  }
-
   it should "Get publications after created" in {
     val memorial = createMemorial
     Get("/publications") ~> sealRoute(routes) ~> check {
       responseAs[PaginatedResult[PublicationInfo]].elements should have size 1
     }
-    Get("/publications/" + memorial.guid.toString) ~> sealRoute(routes) ~> check {
+    Get("/publications/" + memorial.slug) ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.OK
       responseAs[PublicationInfo].guid shouldBe memorial.guid
       responseAs[PublicationInfo].publicationStatus shouldBe defined
