@@ -2,12 +2,13 @@ package pt.org.apec.services.books.test.db
 
 import org.scalatest._
 import pt.org.apec.services.books.common._
-import spray.http.StatusCodes
+import spray.http._
+import godiva.core.pagination.PaginatedResult
 
-class PublicationFilesSpec extends BaseRouteSpec with BasicData with Matchers {
+class PublicationFilesSpec extends FlatSpec with BaseRouteSpec with Matchers with BasicData {
   "Publication files" should "Have an emptypublication files list when no files were created" in {
     val memorial = createMemorial
-    Get(s"/publications/${memorial.slug}/files/") ~> sealRoute(routes) ~> check {
+    Get(s"/publications/${memorial.slug}/files") ~> sealRoute(routes) ~> check {
       status shouldBe StatusCodes.OK
       responseAs[Seq[PublicationFile]] should be('empty)
     }

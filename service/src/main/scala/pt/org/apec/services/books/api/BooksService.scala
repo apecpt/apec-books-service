@@ -6,7 +6,6 @@ import akka.actor.Actor
 import pt.org.apec.services.books.db._
 import pt.org.apec.services.books.common._
 import spray.http._
-import spray.httpx.PlayJsonSupport._
 import scala.concurrent.ExecutionContext
 import godiva.spray.pagination.PaginationDirectives
 import godiva.json.PlayJsonProtocol
@@ -14,10 +13,7 @@ import scala.util.control.NonFatal
 import akka.event.Logging
 import akka.event.LoggingAdapter
 import spray.util.LoggingContext
-
-import scalaz._
-import Scalaz._
-import scalaz.OptionT._
+import scala.concurrent.Future
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {
   def actorRefFactory = context
@@ -29,14 +25,17 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
   def publicationsStore: PublicationsStore
   implicit val executionContext: ExecutionContext
 
-  implicit def exceptionHandler = ExceptionHandler {
-    case e: DuplicateFound => complete { StatusCodes.Conflict -> e }
+  implicit def exceptionHandler(implicit log: LoggingContext) = ExceptionHandler {
+    case e: DuplicateFound => complete {
+      StatusCodes.Conflict -> e
+    }
     case NonFatal(e) => complete {
+      log.error(e, "Unforesiable error processing request")
       StatusCodes.InternalServerError -> e
     }
   }
 
-  def routes = logRequestResponse("routes", Logging.InfoLevel) { categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes }
+  def routes = (logRequestResponse(("routes", Logging.DebugLevel)) & handleExceptions(exceptionHandler)) { categoryRoutes ~ authorRoutes ~ publicationRoutes ~ publicationStatusesRoutes ~ importRoutes }
 
   def categoryRoutes = pathPrefix("categories") {
     pathEndOrSingleSlash {
@@ -103,35 +102,39 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
             StatusCodes.Created -> publicationsStore.createPublication(newPublication)
           }
         }
-    }
-  } ~
-    pathPrefix(Segment) { slug =>
-      pathEndOrSingleSlash {
-        (get & rejectEmptyResponse) {
-          complete {
-            publicationsStore.getPublicationBySlug(slug)
-          }
-        }
-      } ~
-        path("files") {
+    } ~
+      pathPrefix(Segment) { slug =>
+        pathEndOrSingleSlash {
           (get & rejectEmptyResponse) {
             complete {
-              (for {
-                guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
-                files <- OptionT(publicationsStore.getPublicationFiles(guid).map(_.some))
-              } yield (files)).run
+              publicationsStore.getPublicationBySlug(slug)
             }
-          } ~
-            (post & entity(as[NewPublicationFileRequest])) { request =>
-              complete {
-                (for {
-                  guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
-                  result <- OptionT(publicationsStore.createPublicationFile(guid, request).map(_.some))
-                } yield (StatusCodes.Created -> result)).run
-              }
+          }
+        } ~
+          pathPrefix("files") {
+            pathEndOrSingleSlash {
+              (get & rejectEmptyResponse) {
+                import scalaz._, Scalaz._
+                complete {
+                  (for {
+                    guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
+                    files <- OptionT(publicationsStore.getPublicationFiles(guid).map(_.some))
+                  } yield (files)).run
+                }
+              } ~
+                (post & entity(as[NewPublicationFileRequest])) { request =>
+                  complete {
+                    import scalaz._, Scalaz._
+                    (for {
+                      guid <- OptionT(publicationsStore.getPublicationGUIDFromSlug(slug))
+                      result <- OptionT(publicationsStore.createPublicationFile(guid, request).map(_.some))
+                    } yield (StatusCodes.Created -> result)).run
+                  }
+                }
             }
-        }
-    }
+          }
+      }
+  }
 
   def publicationStatusesRoutes = pathPrefix("publicationStatuses") {
     pathEndOrSingleSlash {

@@ -2,7 +2,6 @@ package pt.org.apec.services.books.test.db
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers
-import pt.org.apec.services.books.db._
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.scalatest.concurrent.IntegrationPatience
 import spray.testkit.ScalatestRouteTest

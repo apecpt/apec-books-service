@@ -8,9 +8,9 @@ import pt.org.apec.services.books.common._
 import spray.http._
 import spray.httpx.unmarshalling._
 import spray.httpx.PlayJsonSupport._
-import godiva.json.PlayJsonProtocol
+import godiva.json.PlayJsonProtocol._
 import godiva.core.pagination._
-import pt.org.apec.services.books.common.json.JsonFormaters
+import pt.org.apec.services.books.common.json.JsonFormaters._
 
 class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with BasicData {
   "Publications API" should "Return an empty list when no publications exists" in {

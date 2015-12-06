@@ -1,6 +1,6 @@
 
 val playJsonVersion = "2.4.2"
-val akkaV = "2.3.12"
+val akkaV = "2.3.14"
 val sprayV = "1.3.3"
 val godivaVersion = "0.1.0"
 

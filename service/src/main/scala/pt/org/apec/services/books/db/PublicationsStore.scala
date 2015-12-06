@@ -161,5 +161,5 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
 
 }
 
-case class DatabaseException(errorCode: String, message: String) extends Exception(message)
+class DatabaseException(val errorCode: String, message: String) extends Exception(message)
 class DuplicateFound extends DatabaseException("error.duplicateFound", "Entry already exists")
