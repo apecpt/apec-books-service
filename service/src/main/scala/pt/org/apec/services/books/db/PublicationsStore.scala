@@ -19,7 +19,7 @@ import com.github.tototoshi.slick.PostgresJodaSupport._
  * @author ragb
  */
 trait PublicationsStore extends SchemaManagement with TablesSchema with TablesComponent with Pagination {
-  this: DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext =>
+  this: DriverComponent[CustomPostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext =>
   import driver.api._
   override def tables = super[TablesComponent].tables
   def createCategory(category: NewCategoryRequest): Future[Category] = database.run(Queries.insertCategory(Category(createGUID, category.name, category.slug)))

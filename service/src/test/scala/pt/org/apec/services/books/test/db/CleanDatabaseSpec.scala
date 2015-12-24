@@ -8,9 +8,9 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValueFactory
-import pt.org.apec.services.books.db.PublicationsStore
+import pt.org.apec.services.books.db._
 import slick.driver.PostgresDriver
-import PostgresDriver.api.Database
+import CustomPostgresDriver.api.Database
 import org.scalatest.concurrent.ScalaFutures
 import godiva.slick._
 
@@ -19,8 +19,8 @@ import godiva.slick._
  */
 trait CleanDatabaseSpec extends FlatSpec with BeforeAndAfter {
   val database = Database.forConfig("db.test")
-  val publicationsStore = new PublicationsStore with DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext {
-    val driver = PostgresDriver
+  val publicationsStore = new PublicationsStore with DriverComponent[CustomPostgresDriver] with DatabaseComponent[CustomPostgresDriver] with DefaultExecutionContext {
+    val driver = CustomPostgresDriver
     val database = CleanDatabaseSpec.this.database
     val executionContext = scala.concurrent.ExecutionContext.Implicits.global
   }

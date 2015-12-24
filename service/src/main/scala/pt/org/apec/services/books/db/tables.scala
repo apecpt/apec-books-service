@@ -9,7 +9,7 @@ import godiva.slick.DriverComponent
 import godiva.slick.TablesSchema
 
 trait TablesComponent extends TablesSchema {
-  this: DriverComponent[PostgresDriver] =>
+  this: DriverComponent[CustomPostgresDriver] =>
   import driver.api._
   class Authors(tag: Tag) extends Table[Author](tag, "books") {
     def guid = column[UUID]("guid", O.PrimaryKey)

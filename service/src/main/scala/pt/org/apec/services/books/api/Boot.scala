@@ -9,10 +9,9 @@ import akka.actor.Props
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.Await
-import pt.org.apec.services.books.db.PublicationsStore
+import pt.org.apec.services.books.db._
 import godiva.slick._
-import slick.driver.PostgresDriver
-import PostgresDriver.api.Database
+import CustomPostgresDriver.api._
 
 /**
  * @author ragb
@@ -23,8 +22,8 @@ object Boot {
   import system.dispatcher
 
   val db = Database.forConfig("db.default", conf)
-  val store = new PublicationsStore with DriverComponent[PostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext {
-    val driver = PostgresDriver
+  val store = new PublicationsStore with DriverComponent[CustomPostgresDriver] with DatabaseComponent[CustomPostgresDriver] with DefaultExecutionContext {
+    val driver = CustomPostgresDriver
     val database = db
     val executionContext = system.dispatcher
   }

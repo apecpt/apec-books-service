@@ -46,7 +46,8 @@ val serviceLibraryDependencies = {
   "org.scalaz" %% "scalaz-core" % "7.1.5",
   "com.ruiandrebatista.godiva" %% "godiva-slick" % godivaVersion,
   "com.ruiandrebatista.godiva" %% "godiva-spray" % godivaVersion,
-  "com.ruiandrebatista.godiva" %% "godiva-play-json" % godivaVersion
+  "com.ruiandrebatista.godiva" %% "godiva-play-json" % godivaVersion,
+  "com.github.tminglei" %% "slick-pg" % "0.10.2"
 )
 }
 
