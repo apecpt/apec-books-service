@@ -5,6 +5,7 @@
 			<pattern>%date{YYYY-MM-dd HH:mm:ss} %level [%thread] %logger %msg%n</pattern>
 		</encoder>
 	</appender>
+	<logger name="slick.jdbc.JdbcBackend.statement" level="info" />
 
 	<root level="info">
 		<appender-ref ref="STDOUT" />

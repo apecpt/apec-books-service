@@ -56,4 +56,12 @@ class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with Ba
       r(0).publicationCount shouldBe 1
     }
   }
+
+  it should "search for publications." in {
+    createMemorial
+    Get("/publications?q=memorial") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[PaginatedResult[PublicationInfo]].elements should have size 1
+    }
+  }
 }

@@ -67,6 +67,19 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     }
     database.run(actions)
   }
+  def searchPublications(query: String, pagination: PaginationRequest) = {
+    val q = (for {
+      ((p, (_, _, rank, _)), s) <- Queries.getPublications join publicationSearches.map(p => (p.publicationGUID, p.vector, tsRank(p.vector, toTsQuery(query, Some("portuguese"))), p.languageConfig)).filter(p => p._2 @@ toTsQuery(query, Some("portuguese"))) on (_.guid === _._1) joinLeft publicationStatuses on (_._1.publicationStatusGUID === _.guid)
+    } yield (p, s, rank)).sortBy(_._3)
+    val publications = q.paginated(pagination)
+    val actions = publications flatMap {
+      case PaginatedResult(ps, page, totals) =>
+        val infos: Seq[DBIO[PublicationInfo]] = ps map { case (p, s, _) => mkPublicationInfo(p, s) }
+        DBIO.sequence(infos).map(PaginatedResult(_, page, totals))
+    }
+    database.run(actions)
+
+  }
 
   def getPublicationGUIDFromSlug(slug: String): Future[Option[UUID]] = database.run(publications.filter(_.slug === slug).map(_.guid).result.headOption)
   def getPublicationByGUID(guid: UUID): Future[Option[PublicationInfo]] = {

@@ -91,8 +91,16 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
       get {
         paginated { paginationRequest =>
           publicationsSorted { order =>
-            complete {
-              publicationsStore.getPublications(paginationRequest, order)
+            parameters("q".?) { maybeQ =>
+              maybeQ map { q =>
+                complete {
+                  publicationsStore.searchPublications(q, paginationRequest)
+                }
+              } getOrElse {
+                complete {
+                  publicationsStore.getPublications(paginationRequest, order)
+                }
+              }
             }
           }
         }
