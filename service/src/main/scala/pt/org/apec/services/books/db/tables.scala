@@ -7,11 +7,12 @@ import org.joda.time.DateTime
 import pt.org.apec.services.books.common._
 import godiva.slick.DriverComponent
 import godiva.slick.TablesSchema
+import com.github.tminglei.slickpg._
 
 trait TablesComponent extends TablesSchema {
   this: DriverComponent[CustomPostgresDriver] =>
   import driver.api._
-  class Authors(tag: Tag) extends Table[Author](tag, "books") {
+  class Authors(tag: Tag) extends Table[Author](tag, "authors") {
     def guid = column[UUID]("guid", O.PrimaryKey)
     def name = column[String]("name")
     def slug = column[String]("slug", O.Length(256))
@@ -52,16 +53,16 @@ trait TablesComponent extends TablesSchema {
     def * = (guid, title, slug, publicationYear, createdAt, updatedAt, notes, publicationStatusGUID) <> (Publication.tupled, Publication.unapply _)
   }
 
-  class PublicationAuthors(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_author") {
-    def authorGUID = column[UUID]("author_GUID")
-    def publicationGUID = column[UUID]("publication_GUID")
+  class PublicationAuthors(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_authors") {
+    def authorGUID = column[UUID]("author_guid")
+    def publicationGUID = column[UUID]("publication_guid")
     def author = foreignKey("author_fk", authorGUID, authors)(_.guid)
     def publication = foreignKey("publication_fk", publicationGUID, publications)(_.guid)
     def publicationAuthorIndex = index("publication_author_idx", (authorGUID, publicationGUID), true)
     def * = (authorGUID, publicationGUID)
   }
 
-  class PublicationCategories(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_category") {
+  class PublicationCategories(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_categories") {
     def categoryGUID = column[UUID]("category_guid")
     def publicationGUID = column[UUID]("publication_guid")
     def categoryPublicationIndex = index("category_publication_idx", (categoryGUID, publicationGUID), true)
@@ -83,6 +84,17 @@ trait TablesComponent extends TablesSchema {
     def publication = foreignKey("publication_fk", publicationGUID, publications)(_.guid)
     def * = (guid, publicationGUID, name, contentType, size, url, addedAt, available) <> (PublicationFile.tupled, PublicationFile.unapply _)
   }
+
+  // this could be a view but it sucks with slick.
+  // we will update it manually
+  class PublicationSearches(tag: Tag) extends Table[(UUID, TsVector, String)](tag, "publication_searches") {
+    def publicationGUID = column[UUID]("publication_guid")
+    def publicationIndex = index("publication_search_idx", publicationGUID, true)
+    def publication = foreignKey("publication_search_fk", publicationGUID, publications)(_.guid, ForeignKeyAction.Cascade, ForeignKeyAction.Cascade)
+    def vector = column[TsVector]("vector")
+    def languageConfig = column[String]("language")
+    def * = (publicationGUID, vector, languageConfig)
+  }
   val authors = TableQuery[Authors]
   val publications = TableQuery[Publications]
   val categories = TableQuery[Categories]
@@ -90,6 +102,10 @@ trait TablesComponent extends TablesSchema {
   val publicationCategories = TableQuery[PublicationCategories]
   val publicationStatuses = TableQuery[PublicationStatuses]
   val publicationFiles = TableQuery[PublicationFiles]
-  override def tables = Seq(authors, publications, categories, publicationAuthors, publicationCategories, publicationStatuses, publicationFiles)
+  val publicationSearches = TableQuery[PublicationSearches]
+  override def tables = Seq(authors, publications, categories, publicationAuthors, publicationCategories, publicationStatuses, publicationFiles, publicationSearches)
+  override def createAdditionalActions = Seq(sqlu"""
+    create index "publication_search_vector_idx" on "publication_searches" using gin(vector);
+    """)
 }
 

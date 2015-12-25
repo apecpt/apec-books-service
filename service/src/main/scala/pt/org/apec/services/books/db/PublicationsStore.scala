@@ -11,9 +11,8 @@ import pt.org.apec.services.books.common._
 import pt.org.apec.services.books.common.PublicationSorting._
 import godiva.core.pagination.PaginationRequest
 import godiva.core.pagination.PaginatedResult
-
-// For usage within sortby.
 import com.github.tototoshi.slick.PostgresJodaSupport._
+import com.github.tminglei.slickpg.TsVector
 
 /**
  * @author ragb
@@ -44,6 +43,7 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
       s <- newPublication.publicationStatusGUID
         .map { guid => Queries.getPublicationStatusByGUID(guid).result.headOption }
         .getOrElse(DBIO.successful(None))
+      _ <- Queries.insertPublicationSearch(p.guid, p.title, "portuguese")
       result <- mkPublicationInfo(p, s)
     } yield (result)).transactionally
     database.run(action) recoverWith (mapDuplicateException)
@@ -146,6 +146,15 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
 
     def getPublicationFiles(publicationGUID: UUID) = publicationFiles.filter(_.publicationGUID === publicationGUID).filter(_.available === true)
     def insertPublicationFile(publicationGUID: UUID, request: NewPublicationFileRequest) = (publicationFiles returning publicationFiles.map(_.guid) into ((p, guid) => p)) += PublicationFile(createGUID, publicationGUID, request.name, request.contentType, request.size, request.url)
+
+    def insertPublicationSearch(publicationGUID: UUID, title: String, language: String) = {
+      // slick sql's interpulator sucks for collections.
+      val names = sql"select coalesce(string_agg(a.name, ' '), '') from authors as a where a.guid in (select p.author_guid from publication_authors as p where p.publication_guid = ${publicationGUID.toString}::uuid)".as[String].head
+      names flatMap { n =>
+        publicationSearches.forceInsertExpr((publicationGUID, toTsVector(title, Some(language)).setWeight('a') @+ toTsVector(n, Some(language)).setWeight('d'), language))
+      }
+
+    }
 
     def getCategoryCounts = {
       val q = (for {
