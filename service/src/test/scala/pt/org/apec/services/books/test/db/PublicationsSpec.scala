@@ -63,5 +63,9 @@ class PublicationsSpec extends FlatSpec with BaseRouteSpec with Matchers with Ba
       status shouldBe StatusCodes.OK
       responseAs[PaginatedResult[PublicationInfo]].elements should have size 1
     }
+    Get("/publications?q=nada") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+      responseAs[PaginatedResult[PublicationInfo]].elements should have size 0
+    }
   }
 }
