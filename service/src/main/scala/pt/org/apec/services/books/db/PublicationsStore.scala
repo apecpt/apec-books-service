@@ -138,7 +138,7 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     val getCategoryByGUID = categories.findBy(_.guid)
     val getCategoryBySlug = categories.findBy(_.slug)
     def listAuthors(query: Option[String] = None) = query map { query =>
-      authorsComplete.filter(_.vector @@ toTsQuery(query, Some("portuguese"))).sortBy(t => tsRank(t.vector, toTsQuery(query, Some("portugues")))).map(_.forSelect)
+      authorsComplete.filter(_.vector @@ toTsQuery(query, Some("pg_catalog.portuguese"))).sortBy(t => tsRank(t.vector, toTsQuery(query, Some("pg_catalog.portuguese")))).map(_.forSelect)
     } getOrElse (authors)
     def insertAuthor(author: Author) = (authors returning authorsComplete.map(_.guid) into ((a, guid) => a)) += author
     val getAuthorBySlug = (slug: String) => authorsComplete.filter(_.slug === slug).map(_.forSelect)

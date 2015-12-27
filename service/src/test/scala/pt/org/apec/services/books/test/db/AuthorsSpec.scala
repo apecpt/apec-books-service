@@ -40,4 +40,11 @@ class AuthorsSpec extends BaseRouteSpec with Matchers {
       status shouldBe StatusCodes.NotFound
     }
   }
+
+  it should "search for created authors" in {
+    createRui
+    Get("/authors?q=rui") ~> sealRoute(routes) ~> check {
+      status shouldBe StatusCodes.OK
+    }
+  }
 }
