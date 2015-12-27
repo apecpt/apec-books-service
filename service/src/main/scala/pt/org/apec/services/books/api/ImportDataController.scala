@@ -25,7 +25,7 @@ class ImportDataController(val publicationsStore: PublicationsStore)(implicit ex
     val authorSlugs = request.rawPublications.map(_.author).distinct.map(a => (a, slugify(a)))
     val statusSlugs = request.rawPublications.map(_.status).collect({ case Some(e) => e }).distinct.map(s => (s, slugify(s)))
     val categoriesF = publicationsStore.getCategories
-    val authorsF = publicationsStore.getAuthors
+    val authorsF = publicationsStore.getAuthors()
     val statusesF = publicationsStore.getPublicationStatuses
     for {
       ((categories, authors), statuses) <- categoriesF zip authorsF zip statusesF

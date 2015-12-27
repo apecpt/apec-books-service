@@ -12,12 +12,15 @@ import com.github.tminglei.slickpg._
 trait TablesComponent extends TablesSchema {
   this: DriverComponent[CustomPostgresDriver] =>
   import driver.api._
-  class Authors(tag: Tag) extends Table[Author](tag, "authors") {
+  class Authors(tag: Tag) extends Table[(UUID, String, String, TsVector)](tag, "authors") {
     def guid = column[UUID]("guid", O.PrimaryKey)
     def name = column[String]("name")
+    def nameIndex = index("authr_name_idx", name)
     def slug = column[String]("slug", O.Length(256))
     def slugIndex = index("author_slug_idx", slug, true)
-    def * = (guid, name, slug) <> (Author.tupled, Author.unapply _)
+    def vector = column[TsVector]("vector")
+    def forSelect = (guid, name, slug) <> (Author.tupled, Author.unapply _)
+    def * = (guid, name, slug, vector)
   }
 
   class Categories(tag: Tag) extends Table[Category](tag, "categories") {
@@ -56,7 +59,7 @@ trait TablesComponent extends TablesSchema {
   class PublicationAuthors(tag: Tag) extends Table[(UUID, UUID)](tag, "publication_authors") {
     def authorGUID = column[UUID]("author_guid")
     def publicationGUID = column[UUID]("publication_guid")
-    def author = foreignKey("author_fk", authorGUID, authors)(_.guid)
+    def author = foreignKey("author_fk", authorGUID, authorsComplete)(_.guid)
     def publication = foreignKey("publication_fk", publicationGUID, publications)(_.guid)
     def publicationAuthorIndex = index("publication_author_idx", (authorGUID, publicationGUID), true)
     def * = (authorGUID, publicationGUID)
@@ -95,7 +98,8 @@ trait TablesComponent extends TablesSchema {
     def languageConfig = column[String]("language")
     def * = (publicationGUID, vector, languageConfig)
   }
-  val authors = TableQuery[Authors]
+  lazy val authorsComplete = TableQuery[Authors]
+  lazy val authors = authorsComplete.map(_.forSelect)
   val publications = TableQuery[Publications]
   val categories = TableQuery[Categories]
   val publicationAuthors = TableQuery[PublicationAuthors]
@@ -103,9 +107,20 @@ trait TablesComponent extends TablesSchema {
   val publicationStatuses = TableQuery[PublicationStatuses]
   val publicationFiles = TableQuery[PublicationFiles]
   val publicationSearches = TableQuery[PublicationSearches]
-  override def tables = Seq(authors, publications, categories, publicationAuthors, publicationCategories, publicationStatuses, publicationFiles, publicationSearches)
-  override def createAdditionalActions = Seq(sqlu"""
+  override def tables = Seq(authorsComplete, publications, categories, publicationAuthors, publicationCategories, publicationStatuses, publicationFiles, publicationSearches)
+  override def createAdditionalActions = Seq(
+    sqlu"""
     create index "publication_search_vector_idx" on "publication_searches" using gin(vector);
-    """)
+    """,
+    // index author and make a trigger to update it.
+    sqlu"""
+      create index "author_tv_idx" on "authors" using gin(vector);
+      """,
+    sqlu"""
+              create trigger authorTVUpdate before insert or update
+      on authors for each row execute procedure
+      tsvector_update_trigger(vector, 'pg_catalog.portuguese', name);
+"""
+  )
 }
 

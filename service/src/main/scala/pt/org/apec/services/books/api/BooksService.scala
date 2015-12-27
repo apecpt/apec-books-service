@@ -66,9 +66,9 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
 
   def authorRoutes = pathPrefix("authors") {
     pathEndOrSingleSlash {
-      get {
+      (get & parameters("q".?)) { query =>
         complete {
-          publicationsStore.getAuthors
+          publicationsStore.getAuthors(query)
         }
       } ~
         (post & entity(as[NewAuthorRequest])) { newAuthor =>

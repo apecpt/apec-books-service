@@ -25,7 +25,7 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     .recoverWith(mapDuplicateException)
   def getCategories: Future[Seq[Category]] = database.run(Queries.listCategories.result)
   def getCategoryBySlug(slug: String): Future[Option[Category]] = database.run(Queries.getCategoryBySlug(slug).result.headOption)
-  def getAuthors: Future[Seq[Author]] = database.run(Queries.listAuthors.result)
+  def getAuthors(query: Option[String] = None): Future[Seq[Author]] = database.run(Queries.listAuthors(query).result)
   def createAuthor(newAuthor: NewAuthorRequest): Future[Author] = database.run(Queries.insertAuthor(Author(createGUID, newAuthor.name, newAuthor.slug))).recoverWith(mapDuplicateException)
   def getAuthorBySlug(slug: String): Future[Option[Author]] = database.run(Queries.getAuthorBySlug(slug).result.headOption)
   def getAuthorByGUID(guid: UUID): Future[Option[Author]] = database.run(Queries.getAuthorByGUID(guid).result.headOption)
@@ -137,10 +137,12 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     def listCategories = categories
     val getCategoryByGUID = categories.findBy(_.guid)
     val getCategoryBySlug = categories.findBy(_.slug)
-    val listAuthors = authors
-    def insertAuthor(author: Author) = (authors returning authors.map(_.guid) into ((a, guid) => a)) += author
-    val getAuthorBySlug = authors.findBy(_.slug)
-    val getAuthorByGUID = authors.findBy(_.guid)
+    def listAuthors(query: Option[String] = None) = query map { query =>
+      authorsComplete.filter(_.vector @@ toTsQuery(query, Some("portuguese"))).sortBy(t => tsRank(t.vector, toTsQuery(query, Some("portugues")))).map(_.forSelect)
+    } getOrElse (authors)
+    def insertAuthor(author: Author) = (authors returning authorsComplete.map(_.guid) into ((a, guid) => a)) += author
+    val getAuthorBySlug = (slug: String) => authorsComplete.filter(_.slug === slug).map(_.forSelect)
+    val getAuthorByGUID = (guid: UUID) => authorsComplete.filter(_.guid === guid).map(_.forSelect)
     def insertPublicationStatus(publicationStatus: PublicationStatus) = (publicationStatuses returning publicationStatuses.map(_.guid) into ((p, guid) => p)) += publicationStatus
     val getPublicationStatusBySlug = publicationStatuses.findBy(_.slug)
     val getPublicationStatusByGUID = publicationStatuses.findBy(_.guid)
@@ -150,8 +152,8 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     def insertPublicationCategories(categoryGUIDs: Seq[UUID])(publication: Publication) = publicationCategories ++= categoryGUIDs.map(guid => (guid, publication.guid))
     val getPublicationByGUID = publications.findBy(_.guid)
     def getPublicationAuthors(publicationGUID: UUID) = for {
-      (_, author) <- publicationAuthors.filter(_.publicationGUID === publicationGUID) join authors on (_.authorGUID === _.guid)
-    } yield (author)
+      (_, a) <- publicationAuthors.filter(_.publicationGUID === publicationGUID) join authorsComplete on (_.authorGUID === _.guid)
+    } yield (a.forSelect)
     def getPublicationCategories(publicationGUID: UUID) = for {
       (_, category) <- publicationCategories.filter(_.publicationGUID === publicationGUID) join categories on (_.categoryGUID === _.guid)
     } yield (category)
