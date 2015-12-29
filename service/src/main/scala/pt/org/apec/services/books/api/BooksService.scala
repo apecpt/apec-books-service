@@ -14,6 +14,8 @@ import akka.event.Logging
 import akka.event.LoggingAdapter
 import spray.util.LoggingContext
 import scala.concurrent.Future
+import spray.httpx.unmarshalling._
+import java.util.UUID
 
 class BooksServiceActor(val publicationsStore: PublicationsStore) extends Actor with BooksService {
   def actorRefFactory = context
@@ -32,6 +34,11 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
     case NonFatal(e) => complete {
       log.error(e, "Unforesiable error processing request")
       StatusCodes.InternalServerError -> e
+    }
+  }
+  implicit val uuidDeserializer = new FromStringDeserializer[UUID] {
+    def apply(value: String) = try Right(UUID.fromString(value)) catch {
+      case e: IllegalArgumentException => Left(MalformedContent(s"$value is not a valid UUID"))
     }
   }
 
@@ -97,8 +104,11 @@ trait BooksService extends HttpService with JsonProtocol with PaginationDirectiv
                   publicationsStore.searchPublications(q, paginationRequest)
                 }
               } getOrElse {
-                complete {
-                  publicationsStore.getPublications(paginationRequest, order)
+                // now we consider other filters
+                parameters("authorGUID".as[UUID].?, "categoryGUID".as[UUID].?, "publicationStatusGUID".as[UUID].?).as(PublicationFilters) { filters =>
+                  complete {
+                    publicationsStore.getPublications(paginationRequest, order, filters)
+                  }
                 }
               }
             }

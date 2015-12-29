@@ -20,6 +20,7 @@ import com.github.tminglei.slickpg.TsVector
 trait PublicationsStore extends SchemaManagement with TablesSchema with TablesComponent with Pagination {
   this: DriverComponent[CustomPostgresDriver] with DatabaseComponent[PostgresDriver] with DefaultExecutionContext =>
   import driver.api._
+  import MaybeUtils.MaybeExtensionMethods
   override def tables = super[TablesComponent].tables
   def createCategory(category: NewCategoryRequest): Future[Category] = database.run(Queries.insertCategory(Category(createGUID, category.name, category.slug)))
     .recoverWith(mapDuplicateException)
@@ -49,9 +50,9 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     database.run(action) recoverWith (mapDuplicateException)
   }
 
-  def getPublications(paginationRequest: PaginationRequest, order: PublicationOrder = PublicationOrder(CreatedAt, Desc)): Future[PaginatedResult[PublicationInfo]] = {
+  def getPublications(paginationRequest: PaginationRequest, order: PublicationOrder = PublicationOrder(CreatedAt, Desc), filters: PublicationFilters = PublicationFilters()): Future[PaginatedResult[PublicationInfo]] = {
     val q = for {
-      (p, s) <- Queries.getPublications joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid)
+      (p, s) <- Queries.getPublications(filters) joinLeft publicationStatuses on (_.publicationStatusGUID === _.guid)
     } yield (p, s)
     // TODO: use the direction attribute.
     val sortedQ = order.attribute match {
@@ -69,7 +70,7 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
   }
   def searchPublications(query: String, pagination: PaginationRequest) = {
     val q = (for {
-      ((p, (_, _, rank, _)), s) <- Queries.getPublications join publicationSearches.map(p => (p.publicationGUID, p.vector, tsRank(p.vector, toTsQuery(query, Some("portuguese"))), p.languageConfig)).filter(p => p._2 @@ toTsQuery(query, Some("portuguese"))) on (_.guid === _._1) joinLeft publicationStatuses on (_._1.publicationStatusGUID === _.guid)
+      ((p, (_, _, rank, _)), s) <- Queries.getPublications(PublicationFilters()) join publicationSearches.map(p => (p.publicationGUID, p.vector, tsRank(p.vector, toTsQuery(query, Some("portuguese"))), p.languageConfig)).filter(p => p._2 @@ toTsQuery(query, Some("portuguese"))) on (_.guid === _._1) joinLeft publicationStatuses on (_._1.publicationStatusGUID === _.guid)
     } yield (p, s, rank)).sortBy(_._3)
     val publications = q.paginated(pagination)
     val actions = publications flatMap {
@@ -157,7 +158,10 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
     def getPublicationCategories(publicationGUID: UUID) = for {
       (_, category) <- publicationCategories.filter(_.publicationGUID === publicationGUID) join categories on (_.categoryGUID === _.guid)
     } yield (category)
-    val getPublications = publications
+    def getPublications(filters: PublicationFilters) = publications
+      .maybeFilter(filters.authorGUID) { authorGUID => t => publicationAuthors.filter(pa => pa.authorGUID === authorGUID && pa.publicationGUID === t.guid).exists }
+      .maybeFilter(filters.categoryGUID) { categoryGUID => t => publicationCategories.filter(pc => pc.categoryGUID === categoryGUID && pc.publicationGUID === t.guid).exists }
+      .maybeFilter(filters.publicationStatusGUID) { statusGUID => t => t.publicationStatusGUID === statusGUID }
 
     def getPublicationFiles(publicationGUID: UUID) = publicationFiles.filter(_.publicationGUID === publicationGUID).filter(_.available === true)
     def insertPublicationFile(publicationGUID: UUID, request: NewPublicationFileRequest) = (publicationFiles returning publicationFiles.map(_.guid) into ((p, guid) => p)) += PublicationFile(createGUID, publicationGUID, request.name, request.contentType, request.size, request.url)
@@ -187,3 +191,5 @@ trait PublicationsStore extends SchemaManagement with TablesSchema with TablesCo
 
 class DatabaseException(val errorCode: String, message: String) extends Exception(message)
 class DuplicateFound extends DatabaseException("error.duplicateFound", "Entry already exists")
+
+case class PublicationFilters(authorGUID: Option[UUID] = None, categoryGUID: Option[UUID] = None, publicationStatusGUID: Option[UUID] = None)
